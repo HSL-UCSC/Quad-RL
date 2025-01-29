@@ -18,6 +18,7 @@
             (with pkgs.python313Packages; [
               uv
               pkgs.black
+              pkgs.protobuf
               venvShellHook
             ]);
         };
