@@ -19,6 +19,7 @@
               uv
               pkgs.black
               pkgs.protobuf
+              pkgs.betterproto
               venvShellHook
             ]);
         };

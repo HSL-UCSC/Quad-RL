@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package dronecontrol;
+
+message DropPosition {
+  // Get the drones euler angles or other positional data
+}
+
+message DirectionCommand{
+  enum Direction{
+    STRAIGHT = 0;
+    LEFT = 1;
+    HARD_LEFT = 2;
+    RIGHT = 3;
+    HARD_RIGHT = 4;
+  }
+  Direction move_direction = 0;
+}
