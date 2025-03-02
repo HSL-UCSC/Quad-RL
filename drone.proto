@@ -2,11 +2,43 @@ syntax = "proto3";
 
 package dronecontrol;
 
-message DropPosition {
-  // Get the drones euler angles or other positional data
+service DroneService {
+  rpc GetDirection (DronePosition) returns (DirectionResponse)
 }
 
-message DirectionCommand{
+// Define the obstacle as a polygon
+message PolygonPosition{
+  float Poly_x = 1;
+  float Poly_y = 2;
+  float Poly_z = 3;
+}
+
+// define a polygon obstable as a list of points
+message Polygon {
+  repeated Point verticies = 1;
+}
+
+// define the drone in terms of position and velocity
+message DronePosition {
+  // Position
+    float drone_x = 1;
+    float drone_y = 2;
+    float drone_z = 3;
+
+  // Orientation?
+    float drone_roll = 4;
+    float drone_pitch = 5;
+    float drone_yaw = 6;
+
+  // Velocity
+  float velocity_x = 7;
+  float velocity_y = 8;
+  float velocity_z = 9;
+
+}
+
+// Response back to peng 
+message DirectionResponse{
   enum Direction{
     STRAIGHT = 0;
     LEFT = 1;

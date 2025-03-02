@@ -19,7 +19,9 @@
               uv
               pkgs.black
               pkgs.protobuf
-              pkgs.betterproto
+              pkgs.python3Packages.grpcio
+              pkgs.python3Packages.grpcio-tools
+              pkgs.python3Packages.cython
               venvShellHook
             ]);
         };
