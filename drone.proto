@@ -3,48 +3,73 @@ syntax = "proto3";
 package dronecontrol;
 
 service DroneService {
-  rpc GetDirection (DronePosition) returns (DirectionResponse)
+  rpc GetDirection(DirectionRequest) returns (DirectionResponse)
 }
 
+message DirectionRequest {
+  DroneState drone_state = 1;
+  repeated PolygonPosition polygon_position = 2;
+}
+
+// Define Request Messages //////////////////////////////////////////////////////
+
 // Define the obstacle as a polygon
-message PolygonPosition{
-  float Poly_x = 1;
-  float Poly_y = 2;
-  float Poly_z = 3;
+message PolygonPosition {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+// Define a Point for polygon vertices
+message Point {
+  float x = 1;  
+  float y = 2;
+  float z = 3;
 }
 
 // define a polygon obstable as a list of points
-message Polygon {
-  repeated Point verticies = 1;
-}
+message Polygon { repeated Point vertices = 1; }
 
 // define the drone in terms of position and velocity
-message DronePosition {
+message DroneState {
   // Position
-    float drone_x = 1;
-    float drone_y = 2;
-    float drone_z = 3;
-
-  // Orientation?
-    float drone_roll = 4;
-    float drone_pitch = 5;
-    float drone_yaw = 6;
+  float x = 1;
+  float y = 2;
+  float z = 3;
 
   // Velocity
-  float velocity_x = 7;
-  float velocity_y = 8;
-  float velocity_z = 9;
+  float vx = 4;
+  float vy = 5;
+  float vz = 6;
 
+  // Orientation
+  float roll = 7;
+  float pitch = 8;
+  float yaw = 9;
 }
 
-// Response back to peng 
-message DirectionResponse{
-  enum Direction{
-    STRAIGHT = 0;
-    LEFT = 1;
-    HARD_LEFT = 2;
-    RIGHT = 3;
-    HARD_RIGHT = 4;
+// Define Response Messages /////////////////////////////////////////////////////
+message DirectionResponse {
+  State state = 1;
+
+  oneof control_type {
+    DiscreteHeading discrete_heading = 2;
+    ContinuousHeading continuous_heading = 3;
   }
-  Direction move_direction = 0;
+}
+
+message DiscreteHeading { 
+  HeadingDirection direction = 1; 
+  }
+
+enum HeadingDirection {
+  STRAIGHT = 0;
+  LEFT = 1;
+  HARD_LEFT = 2;
+  RIGHT = 3;
+  HARD_RIGHT = 4;
+}
+
+message ContinuousHeading {
+  float rad = 1;
 }
