@@ -22,6 +22,8 @@
               pkgs.python3Packages.grpcio
               pkgs.python3Packages.grpcio-tools
               pkgs.python3Packages.cython
+              pkgs.gcc
+              pkgs.grpcurl
               venvShellHook
             ]);
         };
