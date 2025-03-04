@@ -4,7 +4,7 @@ import drone_service_pb2
 import drone_service_pb2_grpc
 from my_hybrid_rl_policy import HyRLPolicy  # Import your existing HyRL policy
 
-class DroneServiceServicer(drone_service_pb2_grpc.DroneServiceServicer):
+class DroneSerivceHandler(drone_service_pb2_grpc.DroneSerivceHandler):
     def __init__(self):
         self.hyrl_policy = HyRLPolicy()  # Load the trained policy
 
@@ -20,7 +20,7 @@ class DroneServiceServicer(drone_service_pb2_grpc.DroneServiceServicer):
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    drone_service_pb2_grpc.add_DroneServiceServicer_to_server(DroneServiceServicer(), server)
+    drone_service_pb2_grpc.add_DroneSerivceHandler_to_server(DroneSerivceHandler(), server)
     server.add_insecure_port("[::]:50051")
     server.start()
     print("Server running on port 50051...")
