@@ -5,22 +5,20 @@ from concurrent import futures
 import drone_pb2
 import drone_pb2_grpc
 
-class DroneServiceHandler(drone_pb2_grpc.DroneServiceHandler):
+class DroneServiceServicer(drone_pb2_grpc.DroneServiceServicer):
     def SetEnvironment(self, request, context):
         print("Received SetEnvironment request")
         return drone_pb2.SetEnvironmentResponse(message="Ping! Environment set.")
 
     def GetDirection(self, request, context):
         print("Received GetDirection request")
-        return drone_pb2.DirectionResponse()  # Empty response just to confirm ping
-
-    def ResetEnvironment(self, request, context):
-        print("Received ResetEnvironment request")
-        return drone_pb2.ResetEnvironmentResponse(message="Ping! Environment reset.")
+        return drone_pb2.DirectionResponse(
+            continuous_heading=drone_pb2.ContinuousHeading(rad=0.0)  # Dummy response
+        )
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    drone_pb2_grpc.add_DroneServiceHandler_to_server(DroneServiceHandler(), server)
+    drone_pb2_grpc.add_DroneServiceServicer_to_server(DroneServiceServicer(), server)
     server.add_insecure_port("[::]:50051")
     print("gRPC server is running on port 50051...")
     server.start()
