@@ -18,11 +18,8 @@
             (with pkgs.python313Packages; [
               uv
               pkgs.black
-              pkgs.protobuf
-              betterproto
-              pkgs.grpcurl
               venvShellHook
-              betterproto
+              # used pip install for betterproto because of compatibility issues with python 313
             ]);
         };
       });

@@ -4,7 +4,7 @@ package dronecontrol;
 
 service DroneService {
   rpc SetEnvironment(SetEnvironmentRequest) returns (SetEnvironmentResponse);
-  rpc GetDirection(DirectionRequest) returns (DirectionResponse)
+  rpc GetDirection(DirectionRequest) returns (DirectionResponse);
 }
 
 // DEFINE DIRECTION REQUEST
@@ -17,13 +17,13 @@ message DroneState {
   float y = 2;
   float z = 3;
 
-  optional float vx = 4;
-  optional float vy = 5;
-  optional float vz = 6;
+   float vx = 4;
+   float vy = 5;
+   float vz = 6;
 
-  optional float roll = 7;
-  optional float pitch = 8;
-  optional float yaw = 9;
+   float roll = 7;
+   float pitch = 8;
+   float yaw = 9;
 }
 
 
