@@ -18,7 +18,15 @@
             (with pkgs.python313Packages; [
               uv
               pkgs.black
+              pkgs.grpcurl
               venvShellHook
+              pkgs.python3
+              pkgs.python3Packages.grpcio
+              pkgs.python3Packages.grpcio-tools
+              pkgs.python3Packages.protobuf
+              pkgs.python3Packages.setuptools
+              pkgs.python3Packages.wheel
+              pkgs.python3Packages.cython
               # used pip install for betterproto because of compatibility issues with python 313
             ]);
         };
