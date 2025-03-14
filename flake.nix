@@ -14,13 +14,24 @@
       devShells = forEachSupportedSystem ({ pkgs }: {
         default = pkgs.mkShell {
           venvDir = ".venv";
-          packages = with pkgs; [ python313 ] ++
-            (with pkgs.python313Packages; [
-              uv
-              pkgs.black
-              pkgs.protobuf
-              venvShellHook
-            ]);
+          packages = with pkgs; [
+            python313
+            stdenv.cc  # Replace gcc with this            
+            grpcurl
+            protobuf
+          ] ++ (with pkgs.python313Packages; [
+            grpcio
+            grpcio-tools
+            protobuf
+            setuptools
+            wheel
+            cython
+            pkgs.black  # Use default black instead of override
+            venvShellHook
+          ]);
+          shellHook = ''
+            source .venv/bin/activate
+            export LD_LIBRARY_PATH=${pkgs.stdenv.cc.cc.lib}/lib:$LD_LIBRARY_PATH          '';
         };
       });
     };

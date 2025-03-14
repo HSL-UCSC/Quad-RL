@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package dronecontrol;
+
+service DroneService {
+  rpc SetEnvironment(SetEnvironmentRequest) returns (SetEnvironmentResponse);
+  rpc GetDirection(DirectionRequest) returns (DirectionResponse);
+}
+
+// DEFINE DIRECTION REQUEST
+message DirectionRequest {
+  DroneState drone_state = 1;
+}
+// define drone state
+message DroneState {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+
+   float vx = 4;
+   float vy = 5;
+   float vz = 6;
+
+   float roll = 7;
+   float pitch = 8;
+   float yaw = 9;
+}
+
+
+// DEFINE DIRECTION RESPONSE
+message DirectionResponse {
+  oneof control_type {
+    DiscreteHeading discrete_heading = 2;
+    ContinuousHeading continuous_heading = 3;
+  }
+}
+
+message DiscreteHeading { 
+  HeadingDirection direction = 1;
+}
+
+enum HeadingDirection {
+  STRAIGHT = 0;
+  LEFT = 1;
+  HARD_LEFT = 2;
+  RIGHT = 3;
+  HARD_RIGHT = 4;
+}
+
+message ContinuousHeading { float rad = 1; }
+
+// DEFINE ENVIRONMENT REQUEST
+message SetEnvironmentRequest {
+  repeated Vertex vertex = 1;
+}
+
+message Vertex { 
+  repeated Point vertices = 1; 
+}
+
+message Point {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+// DEFINE ENVIRONMENT RESPONSE
+message SetEnvironmentResponse {
+  string message = 1;
+}
