@@ -1,59 +1,40 @@
-import asyncio
-from grpclib.server import Server
-from dronecontrol import (
-    SetEnvironmentRequest,
-    SetEnvironmentResponse,
-    DirectionRequest,
-    DirectionResponse,
-    DroneState,
-    DiscreteHeading,
-    ContinuousHeading,
-    HeadingDirection,
-)
+import grpc
+from concurrent import futures
+import drone_pb2
+import drone_pb2_grpc
 
 
-class DroneService:
-    async def set_environment(self, stream):
-        request = await stream.recv_message()
-        print(f"Received SetEnvironmentRequest with vertices: {request.vertex}")
-        response = SetEnvironmentResponse(message="Environment Set Successfully!")
-        await stream.send_message(response)
-
-    async def get_direction(self, stream):
-        request = await stream.recv_message()
-        print(f"Received DirectionRequest for drone state: {request.drone_state}")
-        # Example response
-        response = DirectionResponse(
-            discrete_heading=DiscreteHeading(direction=HeadingDirection.STRAIGHT)
+class DroneServiceServicer(drone_pb2_grpc.DroneServiceServicer):
+    def SetEnvironment(self, request, context):
+        # Placeholder: Echo a success message
+        response = drone_pb2.SetEnvironmentResponse(
+            message="Environment set successfully"
         )
-        await stream.send_message(response)
+        return response
+
+    def GetDirection(self, request, context):
+        # Placeholder: Decide direction based on drone state
+        drone_state = request.drone_state
+        if drone_state.x > 0:
+            direction = drone_pb2.HeadingDirection.RIGHT
+        else:
+            direction = drone_pb2.HeadingDirection.STRAIGHT
+        response = drone_pb2.DirectionResponse(
+            discrete_heading=drone_pb2.DiscreteHeading(direction=direction)
+        )
+        return response
 
 
-async def main():
-    # Create the server
-    server = Server()
-
-    # Add handlers for the DroneService
-    server.add_generic_rpc_handlers(
-        [
-            # Set environment
-            (
-                "/dronecontrol.DroneService/SetEnvironment",
-                DroneService().set_environment,
-            ),
-            # Get direction
-            ("/dronecontrol.DroneService/GetDirection", DroneService().get_direction),
-        ]
+def serve():
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    drone_pb2_grpc.add_DroneServiceServicer_to_server(
+        DroneServiceServicer(), server
     )
-
-    # Start the server at 127.0.0.1:50051
-    await server.start("127.0.0.1", 50051)
-    print("gRPC server running on 127.0.0.1:50051")
-
-    # Keep the server running
-    await server.wait_closed()
+    server.add_insecure_port("[::]:50051")  # Listen on port 50051
+    print("Server starting on port 50051...")
+    server.start()
+    server.wait_for_termination()
 
 
 if __name__ == "__main__":
-    print("Starting gRPC server...")
-    asyncio.run(main())
+    serve()

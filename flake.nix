@@ -14,21 +14,24 @@
       devShells = forEachSupportedSystem ({ pkgs }: {
         default = pkgs.mkShell {
           venvDir = ".venv";
-          packages = with pkgs; [ python313 ] ++
-            (with pkgs.python313Packages; [
-              uv
-              pkgs.black
-              pkgs.grpcurl
-              venvShellHook
-              pkgs.python3
-              pkgs.python3Packages.grpcio
-              pkgs.python3Packages.grpcio-tools
-              pkgs.python3Packages.protobuf
-              pkgs.python3Packages.setuptools
-              pkgs.python3Packages.wheel
-              pkgs.python3Packages.cython
-              # used pip install for betterproto because of compatibility issues with python 313
-            ]);
+          packages = with pkgs; [
+            python313
+            stdenv.cc  # Replace gcc with this            
+            grpcurl
+            protobuf
+          ] ++ (with pkgs.python313Packages; [
+            grpcio
+            grpcio-tools
+            protobuf
+            setuptools
+            wheel
+            cython
+            pkgs.black  # Use default black instead of override
+            venvShellHook
+          ]);
+          shellHook = ''
+            source .venv/bin/activate
+            export LD_LIBRARY_PATH=${pkgs.stdenv.cc.cc.lib}/lib:$LD_LIBRARY_PATH          '';
         };
       });
     };
