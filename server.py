@@ -1,5 +1,6 @@
 import asyncio
 from grpclib.server import Server
+from typing import List
 from dronecontrol import (
     SetEnvironmentRequest,
     SetEnvironmentResponse,
@@ -9,44 +10,33 @@ from dronecontrol import (
     DiscreteHeading,
     ContinuousHeading,
     HeadingDirection,
+    DroneServiceStub,
+    Vertex,
 )
+import drone_grpc
 
 
-class DroneService:
-    async def set_environment(self, stream):
-        request = await stream.recv_message()
-        print(f"Received SetEnvironmentRequest with vertices: {request.vertex}")
-        response = SetEnvironmentResponse(message="Environment Set Successfully!")
+class DroneService(drone_grpc.DroneServiceBase):
+    async def SetEnvironment(self, stream):
+        request: SetEnvironmentRequest = await stream.recv_message()
+        print(f"Received environment with {len(request.vertex)} vertices")
+
+        response = SetEnvironmentResponse(message="Environment set")
         await stream.send_message(response)
 
-    async def get_direction(self, stream):
-        request = await stream.recv_message()
-        print(f"Received DirectionRequest for drone state: {request.drone_state}")
-        # Example response
-        response = DirectionResponse(
-            discrete_heading=DiscreteHeading(direction=HeadingDirection.STRAIGHT)
-        )
+    async def GetDirection(self, stream):
+        request: DirectionRequest = await stream.recv_message()
+        print(f"Received drone state: {request}")
+
+        heading = DiscreteHeading(direction=HeadingDirection.LEFT)  # Example
+        response = DirectionResponse(discrete_heading=heading)
         await stream.send_message(response)
 
 
 async def main():
     # Create the server
-    server = Server()
+    server = Server([(DroneService())])
 
-    # Add handlers for the DroneService
-    server.add_generic_rpc_handlers(
-        [
-            # Set environment
-            (
-                "/dronecontrol.DroneService/SetEnvironment",
-                DroneService().set_environment,
-            ),
-            # Get direction
-            ("/dronecontrol.DroneService/GetDirection", DroneService().get_direction),
-        ]
-    )
-
-    # Start the server at 127.0.0.1:50051
     await server.start("127.0.0.1", 50051)
     print("gRPC server running on 127.0.0.1:50051")
 

@@ -4,4 +4,10 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "betterproto>=1.2.5",
+    "grpcio-tools>=1.71.0",
+    "grpcio>=1.71.0",
+    "grpclib>=0.4.7",
+    "protobuf>=5.29.4",
+]
