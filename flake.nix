@@ -13,25 +13,46 @@
     {
       devShells = forEachSupportedSystem ({ pkgs }: {
         default = pkgs.mkShell {
-          venvDir = ".venv";
-          packages = with pkgs; [
+          packages = with pkgs; [ 
             python313
-            stdenv.cc  # Replace gcc with this            
-            grpcurl
-            protobuf
           ] ++ (with pkgs.python313Packages; [
-            grpcio
-            grpcio-tools
-            protobuf
-            setuptools
-            wheel
-            cython
-            pkgs.black  # Use default black instead of override
-            venvShellHook
-          ]);
+              uv
+              pkgs.zsh
+              pkgs.neovim
+              pkgs.black
+              pkgs.grpcurl
+              pkgs.python3
+              pkgs.protobuf
+            ]);
+
           shellHook = ''
-            source .venv/bin/activate
-            export LD_LIBRARY_PATH=${pkgs.stdenv.cc.cc.lib}/lib:$LD_LIBRARY_PATH          '';
+            echo "🔧 Setting up Python virtual environment with uv..."
+            
+            # Add GCC library path to LD_LIBRARY_PATH
+            export LD_LIBRARY_PATH=${pkgs.gcc.cc.lib}/lib:$LD_LIBRARY_PATH
+            
+            # Create venv if it doesn't exist
+            if [ ! -d ".venv" ]; then
+              echo "📦 No .venv found, creating with uv..."
+              uv venv
+            fi
+
+            # Activate the venv
+            if [ -f ".venv/bin/activate" ]; then
+              source .venv/bin/activate
+              echo "✅ Activated Python venv at .venv"
+              python --version
+              # Install dependencies from pyproject.toml if it exists
+              if [ -f "pyproject.toml" ]; then
+                echo "📦 Installing dependencies from pyproject.toml..."
+                uv pip install .
+              else
+                echo "⚠️ No pyproject.toml found, skipping dependency installation"
+              fi
+            else
+              echo "❌ Failed to activate venv: .venv/bin/activate not found"
+            fi
+          '';
         };
       });
     };
