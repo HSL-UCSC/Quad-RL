@@ -11,7 +11,7 @@ GRPCLIB_OUT = $(OUT_DIR)
 BETTERPROTO_OUT = $(OUT_DIR)
 
 run:
-	python src/rl_policy/server.py
+	cd src && PYTHONPATH=$$PWD python -m rl_policy.server
 
 # Command to generate all Python files from .proto
 protos:
@@ -24,4 +24,4 @@ protos:
 
 # Clean generated files (optional)
 clean:
-	rm -f $(OUT_DIR)/*.py
+	rm -f $(OUT_DIR)/drone_pb2.py $(OUT_DIR)/drone_grpc.py  # Only remove generated files

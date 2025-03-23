@@ -1,36 +1,22 @@
 import asyncio
 from grpclib.server import Server
 import signal
-from typing import List
-from dronecontrol import (
-    SetEnvironmentRequest,
-    SetEnvironmentResponse,
-    DirectionRequest,
-    DirectionResponse,
-    DroneState,
-    DiscreteHeading,
-    ContinuousHeading,
-    HeadingDirection,
-    DroneServiceStub,
-    Vertex,
-)
-import drone_grpc
+from . import drone_pb2  # Use generated message types
+from . import drone_grpc  # Service base
 
 
 class DroneService(drone_grpc.DroneServiceBase):
     async def SetEnvironment(self, stream):
-        request: SetEnvironmentRequest = await stream.recv_message()
+        request: drone_pb2.SetEnvironmentRequest = await stream.recv_message()
         print(f"Received environment with {len(request.vertex)} vertices")
-
-        response = SetEnvironmentResponse(message="Environment set")
+        response = drone_pb2.SetEnvironmentResponse(message="Environment set")
         await stream.send_message(response)
 
     async def GetDirection(self, stream):
-        request: DirectionRequest = await stream.recv_message()
+        request: drone_pb2.DirectionRequest = await stream.recv_message()
         print(f"Received drone state: {request}")
-
-        heading = DiscreteHeading(direction=HeadingDirection.LEFT)  # Example
-        response = DirectionResponse(discrete_heading=heading)
+        heading = drone_pb2.DiscreteHeading(direction=drone_pb2.HeadingDirection.LEFT)
+        response = drone_pb2.DirectionResponse(discrete_heading=heading)
         await stream.send_message(response)
 
 
@@ -43,7 +29,6 @@ async def main():
     loop = asyncio.get_running_loop()
     stop = asyncio.Event()
 
-    #  Handle Server Stop 
     def shutdown():
         print("\nShutting Down Server...")
         stop.set()
