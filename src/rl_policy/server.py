@@ -1,5 +1,6 @@
 import asyncio
 from grpclib.server import Server
+import signal
 from typing import List
 from dronecontrol import (
     SetEnvironmentRequest,
@@ -34,14 +35,27 @@ class DroneService(drone_grpc.DroneServiceBase):
 
 
 async def main():
-    # Create the server
-    server = Server([(DroneService())])
-
+    server = Server([DroneService()])
     await server.start("127.0.0.1", 50051)
     print("gRPC server running on 127.0.0.1:50051")
 
-    # Keep the server running
-    await server.wait_closed()
+    # Set up signal handling
+    loop = asyncio.get_running_loop()
+    stop = asyncio.Event()
+
+    #  Handle Server Stop 
+    def shutdown():
+        print("\nShutting Down Server...")
+        stop.set()
+
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, shutdown)
+
+    # Wait for shutdown signal
+    await stop.wait()
+    server.close()  # Stop accepting new connections
+    await server.wait_closed()  # Wait for existing connections to finish
+    print("Server Stopped.")
 
 
 if __name__ == "__main__":

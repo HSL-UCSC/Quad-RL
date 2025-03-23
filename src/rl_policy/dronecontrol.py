@@ -15,6 +15,7 @@ class HeadingDirection(betterproto.Enum):
     RIGHT = 3
     HARD_RIGHT = 4
 
+
 @dataclass
 class DirectionRequest(betterproto.Message):
     """DEFINE DIRECTION REQUEST"""
