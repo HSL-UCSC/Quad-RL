@@ -13,12 +13,12 @@ train = True
 save = False
 
 # Create log dir
-log_dir = "tmp/"
-os.makedirs(log_dir, exist_ok=True)
+log_dir = "tmp/" #os.path.join("tmp", "dqn_obstacleavoidance")
+os.makedirs(log_dir, exist_ok=True) # this is for the log files
 
 # Create and wrap the environment
-env = ObstacleAvoidance()
-env = Monitor(env, log_dir)
+env = ObstacleAvoidance() # this is the environment
+env = Monitor(env, log_dir) # this is for the log files
 
 if load:
     # loading in the model
@@ -26,15 +26,15 @@ if load:
 else:
     # building the model
     policy_kwargs = dict(
-        activation_fn=th.nn.ReLU,
-        net_arch=[64, 64])
+        activation_fn=th.nn.ReLU, 
+        net_arch=[64, 64]) # 2 layers with 64 neurons each
     model = DQN("MlpPolicy", env, policy_kwargs=policy_kwargs, verbose=1,
-                learning_rate=0.0001946, gamma= 0.9664)
+                learning_rate=0.0001946, gamma= 0.9664) 
 
 
 if train:
     # Separate evaluation env
-    eval_env = ObstacleAvoidance()
+    eval_env = ObstacleAvoidance() 
     
     # Stop training when the model reaches the reward threshold
     callback_on_best = StopTrainingOnRewardThreshold(reward_threshold=96, verbose=1)
