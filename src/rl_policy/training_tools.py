@@ -5,7 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from numpy import linalg as LA
 from sklearn.cluster import KMeans
-from training_env import ObstacleAvoidance
+from .training_env import ObstacleAvoidance
 from stable_baselines3 import DQN
 from stable_baselines3.common.callbacks import EvalCallback, \
     StopTrainingOnRewardThreshold

@@ -14,7 +14,9 @@ dependencies = [
     "numpy>=1.26.0",       # For array ops
     "stable-baselines3>=2.0.0",  # For DQN
     "torch>=2.0.0",        # For stable-baselines3
-    "matplotlib>=3.7.0"    # For visualize_M_ext
+    "matplotlib>=3.7.0",    # For visualize_M_ext
+    "gym>=0.26.2",
+    "scikit-learn>=1.5.0", 
 ]
 
 [tool.setuptools]

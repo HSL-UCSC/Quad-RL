@@ -1,13 +1,12 @@
 import asyncio
 import signal
 import numpy as np
-from stable_baselines3 import DQN
 from grpclib.server import Server
 from . import drone_pb2  # Use generated message types
 from . import drone_grpc  # Service base
-from HyRL import HyRL_agent, M_ext, find_X_i, M_i, find_critical_points, state_to_observation_OA, get_state_from_env_OA
-from training_env import ObstacleAvoidance
-from training_tools import find_critical_points, state_to_observation_OA, get_state_from_env_OA, find_X_i, train_hybrid_agent, M_i, M_ext, HyRL_agent, simulate_obstacleavoidance, visualize_M_ext
+import time
+start = time.time()
+print(f"Total import time before main: {time.time() - start:.2f}s")
 
 # Global variables for models and environment
 model = None
@@ -25,6 +24,11 @@ has_obstacle = True             # Flag for obstacle presence
 def initialize_models(x_obst=1.5, y_obst=0.0, radius_obst=0.75, x_goal=3.0, y_goal=0.0):
     global model, agent_0, agent_1, M_ext0, M_ext1, hybrid_agent
     
+    # Import moved here to optimize startup time
+    from stable_baselines3 import DQN
+    from .training_tools import find_critical_points, state_to_observation_OA, get_state_from_env_OA, find_X_i, train_hybrid_agent, M_i, M_ext, HyRL_agent, simulate_obstacleavoidance, visualize_M_ext
+    from .training_env import ObstacleAvoidance
+
     # Load pre-trained models
     model = DQN.load("dqn_obstacleavoidance")
     agent_0 = DQN.load("dqn_obstacleavoidance_0")
@@ -72,7 +76,7 @@ class DroneService(drone_grpc.DroneServiceBase):
         global obstacle_centroid, obstacle_radius, goal_position, hybrid_agent, M_ext0, M_ext1
 
         request: drone_pb2.SetEnvironmentRequest = await stream.recv_message()
-        vertices = [(v.x, v.y, v.z) for v in request.vertex]  # List of (x, y, z) tuples
+        vertices = [(p.x, p.y, p.z) for v in request.vertex for p in v.vertices]
         print(f"Received environment with {len(vertices)} vertices")
         
         # Edge Case: An empty vertex request will initialize an environment with obstacle set at goal with rad=0 
