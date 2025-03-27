@@ -1,11 +1,13 @@
 import asyncio
-from grpclib.server import Server
 import signal
 import numpy as np
 from stable_baselines3 import DQN
+from grpclib.server import Server
 from . import drone_pb2  # Use generated message types
 from . import drone_grpc  # Service base
-from HyRL import HyRL_agent, ObstacleAvoidance, M_ext, find_X_i, M_i, find_critical_points, state_to_observation_OA, get_state_from_env_OA
+from HyRL import HyRL_agent, M_ext, find_X_i, M_i, find_critical_points, state_to_observation_OA, get_state_from_env_OA
+from training_env import ObstacleAvoidance
+from training_tools import find_critical_points, state_to_observation_OA, get_state_from_env_OA, find_X_i, train_hybrid_agent, M_i, M_ext, HyRL_agent, simulate_obstacleavoidance, visualize_M_ext
 
 # Global variables for models and environment
 model = None
@@ -137,7 +139,7 @@ class DroneService(drone_grpc.DroneServiceBase):
         )
         await stream.send_message(response)
             
-async def GetDirection(self, stream):
+    async def GetDirection(self, stream):
         global hybrid_agent, obstacle_centroid, obstacle_radius, goal_position, M_ext0, M_ext1
         
         request: drone_pb2.DirectionRequest = await stream.recv_message()
@@ -175,7 +177,7 @@ async def GetDirection(self, stream):
 async def main():
     # Initialize models and hybrid agent at startup
     print("Initializing RL models...")
-    initialize_models()
+    # initialize_models()
 
     server = Server([DroneService()])
     await server.start("127.0.0.1", 50051)
