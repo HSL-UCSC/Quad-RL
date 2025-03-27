@@ -7,8 +7,11 @@ class ObstacleAvoidance(gym.Env):
     def __init__(self, steps=60, random_init=True, 
                  state_init=np.array([0.,0.], dtype=np.float32), 
                  spread=np.array([0.5,1.], dtype=np.float32),
-                 backwards=False, hybridlearning=False, M_ext=None):
-
+                 backwards=False, hybridlearning=False, M_ext=None,
+                 x_obst=1.5, y_obst=0., radius_obst=0.75, 
+                 x_goal=3., y_goal=0.):
+        
+        # Existing arguments
         self.steps = steps
         self.random_init = random_init
         self.state_init = state_init
@@ -17,13 +20,16 @@ class ObstacleAvoidance(gym.Env):
         self.hybridlearning = hybridlearning
         self.M_ext = M_ext
         
+        # New arguments
+        self.x_obst = x_obst
+        self.y_obst = y_obst
+        self.radius_obst = radius_obst
+        self.x_goal = x_goal
+        self.y_goal = y_goal
+        
         self.min_x, self.max_x = 0., 3.
         self.min_y, self.max_y = -1.5, 1.5
         self.t_sampling = 0.05
-        
-        self.x_obst, self.y_obst = 1.5, 0.
-        self.x_goal, self.y_goal = 3., 0.
-        self.radius_obst = 0.75
         
         self.low_state = np.array(
             [0., 0., self.min_y], dtype=np.float32

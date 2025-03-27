@@ -21,24 +21,28 @@ obstacle_radius = 0.75          # Default radius
 goal_position = [3.0, 0.0]      # Default [x_goal, y_goal]
 has_obstacle = True             # Flag for obstacle presence
 
-def initialize_models(x_obst=1.5, y_obst=0.0, radius_obst=0.75, x_goal=3.0, y_goal=0.0):
+def initialize_models(x_obst=1.5, y_obst=0.0, radius_obst=0.75, x_goal=3.0, y_goal=0.0, has_obstacle=True):
     global model, agent_0, agent_1, M_ext0, M_ext1, hybrid_agent
     
     # Import moved here to optimize startup time
     from stable_baselines3 import DQN
     from .training_tools import find_critical_points, state_to_observation_OA, get_state_from_env_OA, find_X_i, train_hybrid_agent, M_i, M_ext, HyRL_agent, simulate_obstacleavoidance, visualize_M_ext
     from .training_env import ObstacleAvoidance
+    print("Succesfully Imported Model dependencies")
 
     # Load pre-trained models
-    model = DQN.load("dqn_obstacleavoidance")
-    agent_0 = DQN.load("dqn_obstacleavoidance_0")
-    agent_1 = DQN.load("dqn_obstacleavoidance_1")
+    model = DQN.load("rl_policy/dqn_obstacleavoidance")
+    agent_0 = DQN.load("rl_policy/dqn_obstacleavoidance_0")
+    agent_1 = DQN.load("rl_policy/dqn_obstacleavoidance_1")
+    print("Succesfully loaded pre-trained models")
+
 
     # Define environment with current obstacle/goal to use has_obstacle flag
-    env_class = lambda **kwargs: ObstacleAvoidance(x_obst=x_obst, y_obst=y_obst, 
-                                                  radius_obst=radius_obst if has_obstacle else 0.0, 
-                                                  x_goal=x_goal, y_goal=y_goal, 
-                                                  **kwargs)
+    env_class = lambda **kwargs: ObstacleAvoidance(
+        x_obst=x_obst, y_obst=y_obst, radius_obst=radius_obst if has_obstacle else 0.0,
+        x_goal=x_goal, y_goal=y_goal, **kwargs)
+    
+    print("Succesfully defined environment")
 
     # Compute critical points (simplify if no obstacle)
     resolution = 30
@@ -54,21 +58,26 @@ def initialize_models(x_obst=1.5, y_obst=0.0, radius_obst=0.75, x_goal=3.0, y_go
                                      n_clusters=8, custom_state_to_observation=state_to_observation_OA,
                                      get_state_from_env=get_state_from_env_OA, verbose=False)
         M_star = M_star[np.argsort(M_star[:, 0])]
+        print("Succesfully computed M_star")
     else:
         # No obstacle: minimal or no critical points (e.g., single region)
         M_star = np.array([[x_goal, y_goal]])  # Simplistic, forces straight path
-
+        print("No obstacle: minimal M_star")
+        
+    print("Initializing Build Regions")    
     # Build regions and extension regions
     M_0 = M_i(M_star, index=0)
     M_1 = M_i(M_star, index=1) if len(M_star) > 1 else M_0  # Fallback if only one point
+    print("Succesfully built M_0 and M_1")
     X_0 = find_X_i(M_0, model) if has_obstacle else [M_star[0]]  # Minimal extension
     X_1 = find_X_i(M_1, model) if has_obstacle else [M_star[0]]
+    print("Succesfully built X_0 and X_1")
     M_ext0 = M_ext(M_0, X_0)
     M_ext1 = M_ext(M_1, X_1)
+    print("Succesfully built M_ext0 and M_ext1")
 
     # Initialize hybrid agent
     hybrid_agent = HyRL_agent(agent_0, agent_1, M_ext0, M_ext1, q_init=0)
-
 
 class DroneService(drone_grpc.DroneServiceBase):
     # Calls training_env -> train_agent -> HyRL -> utils 
@@ -77,7 +86,7 @@ class DroneService(drone_grpc.DroneServiceBase):
 
         request: drone_pb2.SetEnvironmentRequest = await stream.recv_message()
         vertices = [(p.x, p.y, p.z) for v in request.vertex for p in v.vertices]
-        print(f"Received environment with {len(vertices)} vertices")
+        print(f"Received environment with {len(vertices)} obstacles and goal:\n{request.goal}")
         
         # Edge Case: An empty vertex request will initialize an environment with obstacle set at goal with rad=0 
         if not vertices:  
@@ -128,7 +137,7 @@ class DroneService(drone_grpc.DroneServiceBase):
         
         # Update goal (default to [3, 0] if not provided; adjust proto if goal is included)
         # Assuming request.goal exists with x, y, z fields; modify if different
-        if hasattr(request, 'goal') and request.goal:
+        if request.HasField("goal"):
             goal_position = [request.goal.x, request.goal.y]
         else:
             goal_position = [3.0, 0.0]  # Fallback
@@ -206,4 +215,6 @@ async def main():
 
 if __name__ == "__main__":
     print("Starting gRPC server...")
+    serverStart = time.time() - start
+    print(f"Time taken from import to server start: {serverStart:.2f} seconds")
     asyncio.run(main())

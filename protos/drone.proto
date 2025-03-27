@@ -52,6 +52,7 @@ message ContinuousHeading { float rad = 1; }
 // DEFINE ENVIRONMENT REQUEST
 message SetEnvironmentRequest {
   repeated Vertex vertex = 1;
+  Point goal = 2;
 }
 
 message Vertex { 
