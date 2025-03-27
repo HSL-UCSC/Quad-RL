@@ -27,7 +27,7 @@
 
           shellHook = ''
             echo "🔧 Setting up Python virtual environment with uv..."
-            
+
             # Add GCC library path to LD_LIBRARY_PATH
             export LD_LIBRARY_PATH=${pkgs.gcc.cc.lib}/lib:$LD_LIBRARY_PATH
             

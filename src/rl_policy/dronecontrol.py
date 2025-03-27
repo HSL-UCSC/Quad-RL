@@ -65,6 +65,7 @@ class SetEnvironmentRequest(betterproto.Message):
     """DEFINE ENVIRONMENT REQUEST"""
 
     vertex: List["Vertex"] = betterproto.message_field(1)
+    goal: "Point" = betterproto.message_field(2)
 
 
 @dataclass
@@ -88,11 +89,13 @@ class SetEnvironmentResponse(betterproto.Message):
 
 class DroneServiceStub(betterproto.ServiceStub):
     async def set_environment(
-        self, *, vertex: List["Vertex"] = []
+        self, *, vertex: List["Vertex"] = [], goal: Optional["Point"] = None
     ) -> SetEnvironmentResponse:
         request = SetEnvironmentRequest()
         if vertex is not None:
             request.vertex = vertex
+        if goal is not None:
+            request.goal = goal
 
         return await self._unary_unary(
             "/dronecontrol.DroneService/SetEnvironment",

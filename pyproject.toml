@@ -1,7 +1,7 @@
 [project]
 name = "rl-policy"
 version = "0.1.0"
-description = "Add your description here"
+description = "Reinforcement learning policy server for drone navigation"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -10,7 +10,14 @@ dependencies = [
     "grpcio>=1.71.0",
     "grpclib>=0.4.7",
     "protobuf>=5.29.4",
-    "jinja2>=3.1.0", # dependency for betterproto
+    "jinja2>=3.1.0",       # For betterproto
+    "numpy>=1.26.0",       # For array ops
+    "stable-baselines3>=2.0.0",  # For DQN
+    "torch>=2.0.0",        # For stable-baselines3
+    "matplotlib>=3.7.0",    # For visualize_M_ext
+    "gym>=0.26.2",
+    "scikit-learn>=1.5.0", 
+    "shimmy>=0.2.1",
 ]
 
 [tool.setuptools]

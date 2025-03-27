@@ -9,7 +9,7 @@ import grpclib.client
 if typing.TYPE_CHECKING:
     import grpclib.server
 
-from . import drone_pb2  # Use generated message types
+from . import drone_pb2
 
 
 class DroneServiceBase(abc.ABC):
