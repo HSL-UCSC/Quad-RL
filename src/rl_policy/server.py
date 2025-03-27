@@ -63,9 +63,9 @@ def initialize_models(x_obst=1.5, y_obst=0.0, radius_obst=0.75, x_goal=3.0, y_go
         # No obstacle: minimal or no critical points (e.g., single region)
         M_star = np.array([[x_goal, y_goal]])  # Simplistic, forces straight path
         print("No obstacle: minimal M_star")
-        
-    print("Initializing Build Regions")    
+    
     # Build regions and extension regions
+    print("Initializing Build Regions")    
     M_0 = M_i(M_star, index=0)
     M_1 = M_i(M_star, index=1) if len(M_star) > 1 else M_0  # Fallback if only one point
     print("Succesfully built M_0 and M_1")
@@ -76,8 +76,24 @@ def initialize_models(x_obst=1.5, y_obst=0.0, radius_obst=0.75, x_goal=3.0, y_go
     M_ext1 = M_ext(M_1, X_1)
     print("Succesfully built M_ext0 and M_ext1")
 
+    # print("Initializing Env_0 and Env_1")
+    # env_0 = ObstacleAvoidance(hybridlearning=True, M_ext=M_ext0)
+    # env_1 = ObstacleAvoidance(hybridlearning=True, M_ext=M_ext1)
+
+    # print("Begin agent_0 training")
+    # agent_0 = train_hybrid_agent(env_0, load_agent='dqn_obstacleavoidance', 
+    #                                 save_name='dqn_obstacleavoidance_0',
+    #                                 M_exti=M_ext0, timesteps=300000)
+    # print("Begin agent_1 training")
+    # agent_1 = train_hybrid_agent(env_1, load_agent='dqn_obstacleavoidance', 
+    #                                 save_name='dqn_obstacleavoidance_1',
+    #                                 M_exti=M_ext1, timesteps=300000)
+    # print("Training models saved in dqn_obstacleavoidance_0 and _1")
+    
     # Initialize hybrid agent
     hybrid_agent = HyRL_agent(agent_0, agent_1, M_ext0, M_ext1, q_init=0)
+    print("Succesfully initialized hybrid agent")
+
 
 class DroneService(drone_grpc.DroneServiceBase):
     # Calls training_env -> train_agent -> HyRL -> utils 

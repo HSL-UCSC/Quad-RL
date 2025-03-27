@@ -12,6 +12,7 @@ from stable_baselines3.common.callbacks import EvalCallback, \
 from stable_baselines3.common.monitor import Monitor
 matplotlib.rcParams['text.usetex'] = True
 
+
 def find_critical_points(initial_points, state_difference, model, Env,
                          min_state_difference, steps, threshold,
                          n_clusters=8, custom_state_init=None,
@@ -383,23 +384,24 @@ def simulate_obstacleavoidance(hybrid_agent, original_agent, state_init,
     plt.tight_layout()
     print('reward original', score_or, ' reward hybrid', score_hyb)    
     
+# Now proceed with your plotting code
 def visualize_M_ext(M_ext, figure_number, resolution=50):
     plt.figure(figure_number)
     x_ = np.linspace(0, 3, resolution)
     y_ = np.linspace(-1.5, 1.5, resolution)
     x, y = np.meshgrid(x_, y_)
-    in_M = np.zeros((resolution,resolution))
-    
+    in_M = np.zeros((resolution, resolution))
+
     for idy in range(resolution):
         for idx in range(resolution):
             in_M[idy, idx] = M_ext.in_M_ext(np.array([x_[idx], y_[idy]]))
     plt.scatter(x, y, s=15, c=in_M)
-    plt.plot(M_ext.M_i.M_star[:,0], M_ext.M_i.M_star[:,1], color='red')
-    obstacle = matplotlib.patches.Circle((1.5,0.), radius=.75, color='gray')
+    plt.plot(M_ext.M_i.M_star[:, 0], M_ext.M_i.M_star[:, 1], color='red')
+    obstacle = matplotlib.patches.Circle((1.5, 0.), radius=.75, color='gray')
     plt.gca().add_patch(obstacle)
-    plt.text(1.42, -0.1, '$\mathcal{C}$', fontsize=22)
+    plt.text(1.42, -0.1, '$\mathcal{C}$', fontsize=22)  # Remove '$' or use plain text
     cbar = plt.colorbar(ticks=[-1, 0, 1])
-    plt.clim(-1,1)
+    plt.clim(-1, 1)
     cbar.ax.tick_params(labelsize=18)
     plt.grid()
     plt.xticks(np.linspace(0, 3, num=7, endpoint=True), fontsize=18)
