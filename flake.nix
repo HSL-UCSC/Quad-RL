@@ -20,6 +20,7 @@
               pkgs.zsh
               pkgs.neovim
               pkgs.black
+              pkgs.texliveFull
               pkgs.grpcurl
               pkgs.python3
               pkgs.protobuf

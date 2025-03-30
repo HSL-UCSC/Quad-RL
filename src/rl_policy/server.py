@@ -75,6 +75,9 @@ def initialize_models(x_obst=1.5, y_obst=0.0, radius_obst=0.75, x_goal=3.0, y_go
     M_ext0 = M_ext(M_0, X_0)
     M_ext1 = M_ext(M_1, X_1)
     print("Succesfully built M_ext0 and M_ext1")
+    
+    visualize_M_ext(M_ext0, figure_number=1)
+
 
     # print("Initializing Env_0 and Env_1")
     # env_0 = ObstacleAvoidance(hybridlearning=True, M_ext=M_ext0)

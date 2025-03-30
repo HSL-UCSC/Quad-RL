@@ -10,7 +10,7 @@ from stable_baselines3 import DQN
 from stable_baselines3.common.callbacks import EvalCallback, \
     StopTrainingOnRewardThreshold
 from stable_baselines3.common.monitor import Monitor
-matplotlib.rcParams['text.usetex'] = True
+# matplotlib.rcParams['text.usetex'] = True
 
 
 def find_critical_points(initial_points, state_difference, model, Env,
