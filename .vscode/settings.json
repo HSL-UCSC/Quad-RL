@@ -10,5 +10,6 @@
 
     "[makefile]": {
         "editor.defaultFormatter": "justinlawrence.makefile-tools"
-    }
+    },
+    "makefile.configureOnOpen": false
 }

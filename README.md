@@ -6,8 +6,9 @@ Checks less than 3 verticies edge case:
 grpcurl -plaintext -import-path /mnt/c/Users/qinyu/OneDrive/Desktop/Repos/Quad-RL/protos -proto drone.proto -d '{"vertex": [{"vertices": [{"x": 1.0, "y": 2.0, "z": 0.0}]}]}' 127.0.0.1:50051 dronecontrol.DroneService/SetEnvironment
 
 grpcurl -plaintext \
-  -import-path /mnt/c/Users/qinyu/OneDrive/Desktop/Repos/Quad-RL/protos \
+  -import-path /mnt/c/Users/qinyu/Desktop/Repositories/rl_policy/protos \
   -proto drone.proto \
   -d '{"goal": {"x": 5.0, "y": 10.0, "z": 2.0}, "vertex": []}' \
   127.0.0.1:50051 dronecontrol.DroneService/SetEnvironment
 
+  grpcurl -plaintext -d '{"drone_state": {"x": 1.0, "y": 0.5, "z": 0.0, "vx": 0.0, "vy": 0.0, "vz": 0.0, "roll": 0.0, "pitch": 0.0, "yaw": 0.0}}' 127.0.0.1:50051 dronecontrol.DroneService.GetDirection

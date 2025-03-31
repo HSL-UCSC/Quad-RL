@@ -9,11 +9,12 @@ import grpclib
 
 
 class HeadingDirection(betterproto.Enum):
-    STRAIGHT = 0
-    LEFT = 1
-    HARD_LEFT = 2
-    RIGHT = 3
-    HARD_RIGHT = 4
+    RESERVED = 0
+    STRAIGHT = 1
+    LEFT = 2
+    HARD_LEFT = 3
+    RIGHT = 4
+    HARD_RIGHT = 5
 
 
 @dataclass
