@@ -1,6 +1,7 @@
 import asyncio
 import signal
 import numpy as np
+import matplotlib.pyplot as plt
 from grpclib.server import Server
 from . import drone_pb2  # Use generated message types
 from . import drone_grpc  # Service base
@@ -108,8 +109,6 @@ def initialize_models(
     M_ext1 = M_ext(M_1, X_1)
     print("✅ Succesfully built M_ext0 and M_ext1")
 
-    visualize_M_ext(M_ext0, figure_number=1)
-
     # print("Initializing Env_0 and Env_1")
     # env_0 = ObstacleAvoidance(hybridlearning=True, M_ext=M_ext0)
     # env_1 = ObstacleAvoidance(hybridlearning=True, M_ext=M_ext1)
@@ -127,6 +126,25 @@ def initialize_models(
     # Initialize hybrid agent
     hybrid_agent = HyRL_agent(agent_0, agent_1, M_ext0, M_ext1, q_init=0)
     print("Succesfully initialized hybrid agent")
+
+    # simulation the hybrid agent compared to the original agent
+    print("Starting simulation")
+    starting_conditions = [
+        np.array([0.0, 0.0], dtype=np.float32),
+        np.array([0.0, 0.055], dtype=np.float32),
+        np.array([0.0, -0.055], dtype=np.float32),
+        np.array([0.0, 0.15], dtype=np.float32),
+        np.array([0.0, -0.15], dtype=np.float32),
+    ]
+    for q in range(2):
+        for state_init in starting_conditions:
+            hybrid_agent = HyRL_agent(agent_0, agent_1, M_ext0, M_ext1, q_init=q)
+            simulate_obstacleavoidance(
+                hybrid_agent, model, state_init, figure_number=3 + q
+            )
+        save_name = "OA_HyRLDQN_Sim_q" + str(q) + ".png"
+        plt.savefig(save_name, format="png")
+    print("saved png file")
 
 
 class DroneService(drone_grpc.DroneServiceBase):
@@ -223,6 +241,7 @@ class DroneService(drone_grpc.DroneServiceBase):
         state = np.array(
             [request.drone_state.x, request.drone_state.y], dtype=np.float32
         )
+        print(f"Drone State:  {state}")
 
         # Compute observation
         obs = state_to_observation_OA(
@@ -233,34 +252,38 @@ class DroneService(drone_grpc.DroneServiceBase):
             x_goal=goal_position[0],
             y_goal=goal_position[1],
         )
+        print(f"observation: {obs}")
 
         # Get action from hybrid agent
         action_array, extra = hybrid_agent.predict(obs)  # Unpack tuple
         print(f"Raw action array: {action_array}")
         print(f"Extra value: {extra}")
-
-        # Convert to scalar based on type
         if isinstance(action_array, np.ndarray):
-            action = float(action_array.item())  # NumPy array case
+            action = float(action_array.item())
         else:
-            action = float(action_array)  # Scalar case (e.g., 0)
+            action = float(action_array)
         print(f"Predicted action (scalar): {action}")
 
-        # Map action to DiscreteHeading
         direction_map = {
-            -1: drone_pb2.HARD_LEFT,  # 2
-            -0.5: drone_pb2.LEFT,  # 1
-            0: drone_pb2.STRAIGHT,  # 0
-            0.5: drone_pb2.RIGHT,  # 3
-            1: drone_pb2.HARD_RIGHT,  # 4
+            0: drone_pb2.STRAIGHT,  # 1
+            1: drone_pb2.LEFT,  # 2
+            2: drone_pb2.HARD_LEFT,  # 3
+            3: drone_pb2.RIGHT,  # 4
+            4: drone_pb2.HARD_RIGHT,  # 5
         }
-        direction = direction_map.get(action, drone_pb2.STRAIGHT)  # Default to STRAIGHT (1), never RESERVED (0)
+        
+        direction = direction_map.get(
+            action, drone_pb2.STRAIGHT
+        )  # Default to STRAIGHT (1), never RESERVED (0)
+        print(f"Mapped direction: {direction}")
 
         # Send response
         heading = drone_pb2.DiscreteHeading()
         heading.direction = direction
         response = drone_pb2.DirectionResponse(discrete_heading=heading)
+        print(f"Response direction: {heading.direction}")
         await stream.send_message(response)
+
 
 async def main():
     # Initialize models and hybrid agent at startup
