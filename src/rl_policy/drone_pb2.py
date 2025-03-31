@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0b\x64rone.proto\x12\x0c\x64ronecontrol\"A\n\x10\x44irectionRequest\x12-\n\x0b\x64rone_state\x18\x01 \x01(\x0b\x32\x18.dronecontrol.DroneState\"{\n\nDroneState\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\x12\n\n\x02vx\x18\x04 \x01(\x02\x12\n\n\x02vy\x18\x05 \x01(\x02\x12\n\n\x02vz\x18\x06 \x01(\x02\x12\x0c\n\x04roll\x18\x07 \x01(\x02\x12\r\n\x05pitch\x18\x08 \x01(\x02\x12\x0b\n\x03yaw\x18\t \x01(\x02\"\x9d\x01\n\x11\x44irectionResponse\x12\x39\n\x10\x64iscrete_heading\x18\x02 \x01(\x0b\x32\x1d.dronecontrol.DiscreteHeadingH\x00\x12=\n\x12\x63ontinuous_heading\x18\x03 \x01(\x0b\x32\x1f.dronecontrol.ContinuousHeadingH\x00\x42\x0e\n\x0c\x63ontrol_type\"D\n\x0f\x44iscreteHeading\x12\x31\n\tdirection\x18\x01 \x01(\x0e\x32\x1e.dronecontrol.HeadingDirection\" \n\x11\x43ontinuousHeading\x12\x0b\n\x03rad\x18\x01 \x01(\x02\"`\n\x15SetEnvironmentRequest\x12$\n\x06vertex\x18\x01 \x03(\x0b\x32\x14.dronecontrol.Vertex\x12!\n\x04goal\x18\x02 \x01(\x0b\x32\x13.dronecontrol.Point\"/\n\x06Vertex\x12%\n\x08vertices\x18\x01 \x03(\x0b\x32\x13.dronecontrol.Point\"(\n\x05Point\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\")\n\x16SetEnvironmentResponse\x12\x0f\n\x07message\x18\x01 \x01(\t*T\n\x10HeadingDirection\x12\x0c\n\x08STRAIGHT\x10\x00\x12\x08\n\x04LEFT\x10\x01\x12\r\n\tHARD_LEFT\x10\x02\x12\t\n\x05RIGHT\x10\x03\x12\x0e\n\nHARD_RIGHT\x10\x04\x32\xbc\x01\n\x0c\x44roneService\x12[\n\x0eSetEnvironment\x12#.dronecontrol.SetEnvironmentRequest\x1a$.dronecontrol.SetEnvironmentResponse\x12O\n\x0cGetDirection\x12\x1e.dronecontrol.DirectionRequest\x1a\x1f.dronecontrol.DirectionResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0b\x64rone.proto\x12\x0c\x64ronecontrol\"A\n\x10\x44irectionRequest\x12-\n\x0b\x64rone_state\x18\x01 \x01(\x0b\x32\x18.dronecontrol.DroneState\"{\n\nDroneState\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\x12\n\n\x02vx\x18\x04 \x01(\x02\x12\n\n\x02vy\x18\x05 \x01(\x02\x12\n\n\x02vz\x18\x06 \x01(\x02\x12\x0c\n\x04roll\x18\x07 \x01(\x02\x12\r\n\x05pitch\x18\x08 \x01(\x02\x12\x0b\n\x03yaw\x18\t \x01(\x02\"\x9d\x01\n\x11\x44irectionResponse\x12\x39\n\x10\x64iscrete_heading\x18\x02 \x01(\x0b\x32\x1d.dronecontrol.DiscreteHeadingH\x00\x12=\n\x12\x63ontinuous_heading\x18\x03 \x01(\x0b\x32\x1f.dronecontrol.ContinuousHeadingH\x00\x42\x0e\n\x0c\x63ontrol_type\"D\n\x0f\x44iscreteHeading\x12\x31\n\tdirection\x18\x01 \x01(\x0e\x32\x1e.dronecontrol.HeadingDirection\" \n\x11\x43ontinuousHeading\x12\x0b\n\x03rad\x18\x01 \x01(\x02\"`\n\x15SetEnvironmentRequest\x12$\n\x06vertex\x18\x01 \x03(\x0b\x32\x14.dronecontrol.Vertex\x12!\n\x04goal\x18\x02 \x01(\x0b\x32\x13.dronecontrol.Point\"/\n\x06Vertex\x12%\n\x08vertices\x18\x01 \x03(\x0b\x32\x13.dronecontrol.Point\"(\n\x05Point\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\")\n\x16SetEnvironmentResponse\x12\x0f\n\x07message\x18\x01 \x01(\t*b\n\x10HeadingDirection\x12\x0c\n\x08RESERVED\x10\x00\x12\x0c\n\x08STRAIGHT\x10\x01\x12\x08\n\x04LEFT\x10\x02\x12\r\n\tHARD_LEFT\x10\x03\x12\t\n\x05RIGHT\x10\x04\x12\x0e\n\nHARD_RIGHT\x10\x05\x32\xbc\x01\n\x0c\x44roneService\x12[\n\x0eSetEnvironment\x12#.dronecontrol.SetEnvironmentRequest\x1a$.dronecontrol.SetEnvironmentResponse\x12O\n\x0cGetDirection\x12\x1e.dronecontrol.DirectionRequest\x1a\x1f.dronecontrol.DirectionResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,7 +32,7 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'drone_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
   _globals['_HEADINGDIRECTION']._serialized_start=717
-  _globals['_HEADINGDIRECTION']._serialized_end=801
+  _globals['_HEADINGDIRECTION']._serialized_end=815
   _globals['_DIRECTIONREQUEST']._serialized_start=29
   _globals['_DIRECTIONREQUEST']._serialized_end=94
   _globals['_DRONESTATE']._serialized_start=96
@@ -51,6 +51,6 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_POINT']._serialized_end=672
   _globals['_SETENVIRONMENTRESPONSE']._serialized_start=674
   _globals['_SETENVIRONMENTRESPONSE']._serialized_end=715
-  _globals['_DRONESERVICE']._serialized_start=804
-  _globals['_DRONESERVICE']._serialized_end=992
+  _globals['_DRONESERVICE']._serialized_start=818
+  _globals['_DRONESERVICE']._serialized_end=1006
 # @@protoc_insertion_point(module_scope)

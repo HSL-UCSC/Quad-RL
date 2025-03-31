@@ -40,11 +40,12 @@ message DiscreteHeading {
 }
 
 enum HeadingDirection {
-  STRAIGHT = 0;
-  LEFT = 1;
-  HARD_LEFT = 2;
-  RIGHT = 3;
-  HARD_RIGHT = 4;
+  RESERVED = 0;
+  STRAIGHT = 1;
+  LEFT = 2;
+  HARD_LEFT = 3;
+  RIGHT = 4;
+  HARD_RIGHT = 5;
 }
 
 message ContinuousHeading { float rad = 1; }

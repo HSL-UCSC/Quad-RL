@@ -6,6 +6,7 @@ from . import drone_pb2  # Use generated message types
 from . import drone_grpc  # Service base
 from .training_tools import state_to_observation_OA
 import time
+
 start = time.time()
 print(f"Total import time before main: {time.time() - start:.2f}s")
 
@@ -18,17 +19,32 @@ M_ext1 = None
 hybrid_agent = None
 obstacle_vertices = None
 obstacle_centroid = [1.5, 0.0]  # Default [x_obst, y_obst]
-obstacle_radius = 0.75          # Default radius
-goal_position = [3.0, 0.0]      # Default [x_goal, y_goal]
-has_obstacle = True             # Flag for obstacle presence
+obstacle_radius = 0.75  # Default radius
+goal_position = [3.0, 0.0]  # Default [x_goal, y_goal]
+has_obstacle = True  # Flag for obstacle presence
 
-def initialize_models(x_obst=1.5, y_obst=0.0, radius_obst=0.75, x_goal=3.0, y_goal=0.0, has_obstacle=True):
+
+def initialize_models(
+    x_obst=1.5, y_obst=0.0, radius_obst=0.75, x_goal=3.0, y_goal=0.0, has_obstacle=True
+):
     global model, agent_0, agent_1, M_ext0, M_ext1, hybrid_agent
 
     # Import moved here to optimize startup time
     from stable_baselines3 import DQN
-    from .training_tools import find_critical_points, state_to_observation_OA, get_state_from_env_OA, find_X_i, train_hybrid_agent, M_i, M_ext, HyRL_agent, simulate_obstacleavoidance, visualize_M_ext
+    from .training_tools import (
+        find_critical_points,
+        state_to_observation_OA,
+        get_state_from_env_OA,
+        find_X_i,
+        train_hybrid_agent,
+        M_i,
+        M_ext,
+        HyRL_agent,
+        simulate_obstacleavoidance,
+        visualize_M_ext,
+    )
     from .training_env import ObstacleAvoidance
+
     print("Succesfully Imported Model dependencies")
 
     # Load pre-trained models
@@ -39,8 +55,13 @@ def initialize_models(x_obst=1.5, y_obst=0.0, radius_obst=0.75, x_goal=3.0, y_go
 
     # Define environment with current obstacle/goal to use has_obstacle flag
     env_class = lambda **kwargs: ObstacleAvoidance(
-        x_obst=x_obst, y_obst=y_obst, radius_obst=radius_obst if has_obstacle else 0.0,
-        x_goal=x_goal, y_goal=y_goal, **kwargs)
+        x_obst=x_obst,
+        y_obst=y_obst,
+        radius_obst=radius_obst if has_obstacle else 0.0,
+        x_goal=x_goal,
+        y_goal=y_goal,
+        **kwargs,
+    )
     print("✅ Succesfully defined environment")
 
     # Compute critical points (simplify if no obstacle)
@@ -48,14 +69,26 @@ def initialize_models(x_obst=1.5, y_obst=0.0, radius_obst=0.75, x_goal=3.0, y_go
     x_ = np.linspace(0, 3, resolution)
     y_ = np.linspace(-1.5, 1.5, resolution)
     state_difference = np.linalg.norm(np.array([x_[1] - x_[0], y_[1] - y_[0]]))
-    initial_points = [np.array([x_[idx], y_[idy]], dtype=np.float32) 
-                     for idx in range(resolution) for idy in range(resolution)]
+    initial_points = [
+        np.array([x_[idx], y_[idy]], dtype=np.float32)
+        for idx in range(resolution)
+        for idy in range(resolution)
+    ]
 
     if has_obstacle:
-        M_star = find_critical_points(initial_points, state_difference, model, env_class,
-                                     min_state_difference=1e-2, steps=5, threshold=1e-1, 
-                                     n_clusters=8, custom_state_to_observation=state_to_observation_OA,
-                                     get_state_from_env=get_state_from_env_OA, verbose=False)
+        M_star = find_critical_points(
+            initial_points,
+            state_difference,
+            model,
+            env_class,
+            min_state_difference=1e-2,
+            steps=5,
+            threshold=1e-1,
+            n_clusters=8,
+            custom_state_to_observation=state_to_observation_OA,
+            get_state_from_env=get_state_from_env_OA,
+            verbose=False,
+        )
         M_star = M_star[np.argsort(M_star[:, 0])]
         print("✅ Succesfully computed M_star")
     else:
@@ -103,23 +136,30 @@ class DroneService(drone_grpc.DroneServiceBase):
 
         request: drone_pb2.SetEnvironmentRequest = await stream.recv_message()
         vertices = [(p.x, p.y, p.z) for v in request.vertex for p in v.vertices]
-        print(f"Received environment with {len(vertices)} obstacles and goal:\n{request.goal}")
+        print(
+            f"Received environment with {len(vertices)} obstacles and goal:\n{request.goal}"
+        )
 
         # Edge Case: An empty vertex request will initialize an environment with obstacle set at goal with rad=0
-        if not vertices:  
+        if not vertices:
             has_obstacle = False
             obstacle_centroid = goal_position  # No obstacle, align with goal
             obstacle_radius = 0.0
             # Update goal (default if not provided)
-            if hasattr(request, 'goal') and request.goal:
+            if hasattr(request, "goal") and request.goal:
                 goal_position = [request.goal.x, request.goal.y]
             else:
                 goal_position = [3.0, 0.0]
 
             # Reinitialize with no obstacle
-            initialize_models(x_obst=obstacle_centroid[0], y_obst=obstacle_centroid[1], 
-                             radius_obst=0.0, x_goal=goal_position[0], y_goal=goal_position[1], 
-                             has_obstacle=False)
+            initialize_models(
+                x_obst=obstacle_centroid[0],
+                y_obst=obstacle_centroid[1],
+                radius_obst=0.0,
+                x_goal=goal_position[0],
+                y_goal=goal_position[1],
+                has_obstacle=False,
+            )
 
             response = drone_pb2.SetEnvironmentResponse(
                 message=f"Environment set without obstacle and goal at {goal_position}"
@@ -143,12 +183,12 @@ class DroneService(drone_grpc.DroneServiceBase):
         num_vertices = len(vertices)
         x_obst = x_sum / num_vertices
         y_obst = y_sum / num_vertices
-        obstacle_centroid = [x_obst, y_obst] 
+        obstacle_centroid = [x_obst, y_obst]
 
         # Sort the verticies to find max dist from cetroid and use to aproximate a radial boundary for obstacle
         max_dist = 0
         for x, y, z in vertices:
-            dist = np.sqrt((x - x_obst)**2 + (y - y_obst)**2)
+            dist = np.sqrt((x - x_obst) ** 2 + (y - y_obst) ** 2)
             max_dist = max(max_dist, dist)
         obstacle_radius = max_dist
 
@@ -160,9 +200,13 @@ class DroneService(drone_grpc.DroneServiceBase):
             goal_position = [3.0, 0.0]  # Fallback
 
         # Reinitialize environment with new obstacle/goal
-        initialize_models(x_obst=obstacle_centroid[0], y_obst=obstacle_centroid[1], 
-                         radius_obst=obstacle_radius, x_goal=goal_position[0], 
-                         y_goal=goal_position[1])
+        initialize_models(
+            x_obst=obstacle_centroid[0],
+            y_obst=obstacle_centroid[1],
+            radius_obst=obstacle_radius,
+            x_goal=goal_position[0],
+            y_goal=goal_position[1],
+        )
 
         response = drone_pb2.SetEnvironmentResponse(
             message=f"Environment set: Obstacle at {obstacle_centroid}, radius {obstacle_radius}, goal at {goal_position}"
@@ -176,37 +220,46 @@ class DroneService(drone_grpc.DroneServiceBase):
         print(f"Received drone state: {request}")
 
         # Extract 2D position
-        state = np.array([request.drone_state.x, request.drone_state.y], dtype=np.float32)
+        state = np.array(
+            [request.drone_state.x, request.drone_state.y], dtype=np.float32
+        )
 
         # Compute observation
-        obs = state_to_observation_OA(state, 
-                                    x_obst=obstacle_centroid[0], 
-                                    y_obst=obstacle_centroid[1], 
-                                    radius_obst=obstacle_radius if has_obstacle else 0.0, 
-                                    x_goal=goal_position[0], 
-                                    y_goal=goal_position[1])
+        obs = state_to_observation_OA(
+            state,
+            x_obst=obstacle_centroid[0],
+            y_obst=obstacle_centroid[1],
+            radius_obst=obstacle_radius if has_obstacle else 0.0,
+            x_goal=goal_position[0],
+            y_goal=goal_position[1],
+        )
 
         # Get action from hybrid agent
-        action, _ = hybrid_agent.predict(obs)
-        print(f"Predicted action: {action}")  # Debug: Log the action
+        action_array, extra = hybrid_agent.predict(obs)  # Unpack tuple
+        print(f"Raw action array: {action_array}")
+        print(f"Extra value: {extra}")
 
-        # Map action to DiscreteHeading (adjust based on your 5-action space: -1, -0.5, 0, 0.5, 1)
+        # Convert to scalar based on type
+        if isinstance(action_array, np.ndarray):
+            action = float(action_array.item())  # NumPy array case
+        else:
+            action = float(action_array)  # Scalar case (e.g., 0)
+        print(f"Predicted action (scalar): {action}")
+
+        # Map action to DiscreteHeading
         direction_map = {
-            -1: drone_pb2.HARD_LEFT,    # 2: HARD_LEFT
-            -0.5: drone_pb2.LEFT,       # 1: LEFT
-            0: drone_pb2.STRAIGHT,      # 0: STRAIGHT (replacing UP)
-            0.5: drone_pb2.RIGHT,       # 3: RIGHT
-            1: drone_pb2.HARD_RIGHT     # 4: HARD_RIGHT
+            -1: drone_pb2.HARD_LEFT,  # 2
+            -0.5: drone_pb2.LEFT,  # 1
+            0: drone_pb2.STRAIGHT,  # 0
+            0.5: drone_pb2.RIGHT,  # 3
+            1: drone_pb2.HARD_RIGHT,  # 4
         }
-        direction = direction_map.get(float(action), drone_pb2.STRAIGHT)  # Default to STRAIGHT        
-        print(f"Mapped direction: {direction}")  # Debug: Log the mapped direction
-        print(f"Mapped direction type: {type(direction)}")  # Debug: Check type
+        direction = direction_map.get(action, drone_pb2.STRAIGHT)  # Default to STRAIGHT (1), never RESERVED (0)
 
         # Send response
-        heading = drone_pb2.DiscreteHeading(direction=direction)
-        print(f"Heading direction set to: {heading.direction}")  # Debug: Verify set value        
+        heading = drone_pb2.DiscreteHeading()
+        heading.direction = direction
         response = drone_pb2.DirectionResponse(discrete_heading=heading)
-        print(f"Response before send: {response}")  # Debug: Full response
         await stream.send_message(response)
 
 async def main():
@@ -234,6 +287,7 @@ async def main():
     server.close()
     await server.wait_closed()
     print("Server Stopped.")
+
 
 if __name__ == "__main__":
     print("Starting gRPC server...")
