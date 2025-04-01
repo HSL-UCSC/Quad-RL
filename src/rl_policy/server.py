@@ -1,14 +1,25 @@
 import asyncio
 import signal
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from grpclib.server import Server
-from . import drone_pb2  # Use generated message types
-from . import drone_grpc  # Service base
 from grpclib.exceptions import GRPCError
-from grpclib.const import Status  # Add this import
-from .training_tools import state_to_observation_OA
-import time
+from grpclib.const import Status
+from stable_baselines3 import DQN
+from . import drone_pb2
+from . import drone_grpc
+from .training_env import ObstacleAvoidance
+from .training_tools import (
+    find_critical_points,
+    state_to_observation_OA,
+    get_state_from_env_OA,
+    find_X_i,
+    M_i,
+    M_ext,
+    HyRL_agent,
+    simulate_obstacleavoidance,
+)
 
 start = time.time()
 print(f"Total import time before main: {time.time() - start:.2f}s")
@@ -31,22 +42,6 @@ def initialize_models(
     x_obst=1.5, y_obst=0.0, radius_obst=0.75, x_goal=3.0, y_goal=0.0, has_obstacle=True
 ):
     global model, agent_0, agent_1, M_ext0, M_ext1, hybrid_agent
-
-    # Import moved here to optimize startup time
-    from stable_baselines3 import DQN
-    from .training_tools import (
-        find_critical_points,
-        state_to_observation_OA,
-        get_state_from_env_OA,
-        find_X_i,
-        train_hybrid_agent,
-        M_i,
-        M_ext,
-        HyRL_agent,
-        simulate_obstacleavoidance,
-        visualize_M_ext,
-    )
-    from .training_env import ObstacleAvoidance
 
     print("Succesfully Imported Model dependencies")
 
@@ -140,9 +135,9 @@ class DroneService(drone_grpc.DroneServiceBase):
     async def SetEnvironment(self, stream):
         raise GRPCError(  # Corrected to GRPCError
             status=Status.UNIMPLEMENTED,
-            message="The SetEnvironment endpoint is deprecated."
+            message="The SetEnvironment endpoint is deprecated.",
         )
-        
+
         global obstacle_centroid, obstacle_radius, goal_position, hybrid_agent, M_ext0, M_ext1
         request: drone_pb2.SetEnvironmentRequest = await stream.recv_message()
         vertices = [(p.x, p.y, p.z) for v in request.vertex for p in v.vertices]
@@ -263,7 +258,7 @@ class DroneService(drone_grpc.DroneServiceBase):
             3: drone_pb2.RIGHT,  # 4
             4: drone_pb2.HARD_RIGHT,  # 5
         }
-        
+
         direction = direction_map.get(
             action, drone_pb2.STRAIGHT
         )  # Default to STRAIGHT (1), never RESERVED (0)
