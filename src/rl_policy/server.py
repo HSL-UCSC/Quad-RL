@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from grpclib.server import Server
 from . import drone_pb2  # Use generated message types
 from . import drone_grpc  # Service base
+from grpclib.exceptions import GRPCError
+from grpclib.const import Status  # Add this import
 from .training_tools import state_to_observation_OA
 import time
 
@@ -109,20 +111,6 @@ def initialize_models(
     M_ext1 = M_ext(M_1, X_1)
     print("✅ Succesfully built M_ext0 and M_ext1")
 
-    # print("Initializing Env_0 and Env_1")
-    # env_0 = ObstacleAvoidance(hybridlearning=True, M_ext=M_ext0)
-    # env_1 = ObstacleAvoidance(hybridlearning=True, M_ext=M_ext1)
-
-    # print("Begin agent_0 training")
-    # agent_0 = train_hybrid_agent(env_0, load_agent='dqn_obstacleavoidance',
-    #                                 save_name='dqn_obstacleavoidance_0',
-    #                                 M_exti=M_ext0, timesteps=300000)
-    # print("Begin agent_1 training")
-    # agent_1 = train_hybrid_agent(env_1, load_agent='dqn_obstacleavoidance',
-    #                                 save_name='dqn_obstacleavoidance_1',
-    #                                 M_exti=M_ext1, timesteps=300000)
-    # print("Training models saved in dqn_obstacleavoidance_0 and _1")
-
     # Initialize hybrid agent
     hybrid_agent = HyRL_agent(agent_0, agent_1, M_ext0, M_ext1, q_init=0)
     print("Succesfully initialized hybrid agent")
@@ -150,8 +138,12 @@ def initialize_models(
 class DroneService(drone_grpc.DroneServiceBase):
     # Calls training_env -> train_agent -> HyRL -> utils
     async def SetEnvironment(self, stream):
+        raise GRPCError(  # Corrected to GRPCError
+            status=Status.UNIMPLEMENTED,
+            message="The SetEnvironment endpoint is deprecated."
+        )
+        
         global obstacle_centroid, obstacle_radius, goal_position, hybrid_agent, M_ext0, M_ext1
-
         request: drone_pb2.SetEnvironmentRequest = await stream.recv_message()
         vertices = [(p.x, p.y, p.z) for v in request.vertex for p in v.vertices]
         print(
