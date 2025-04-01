@@ -35,27 +35,23 @@ obstacle_vertices = None
 obstacle_centroid = [1.5, 0.0]  # Default [x_obst, y_obst]
 obstacle_radius = 0.75  # Default radius
 goal_position = [3.0, 0.0]  # Default [x_goal, y_goal]
-has_obstacle = True  # Flag for obstacle presence
-
+generate_sim_plot = False
 
 def initialize_models(
-    x_obst=1.5, y_obst=0.0, radius_obst=0.75, x_goal=3.0, y_goal=0.0, has_obstacle=True
+    x_obst=1.5, y_obst=0.0, radius_obst=0.75, x_goal=3.0, y_goal=0.0
 ):
     global model, agent_0, agent_1, M_ext0, M_ext1, hybrid_agent
 
-    print("Succesfully Imported Model dependencies")
-
     # Load pre-trained models
-    model = DQN.load("rl_policy/dqn_obstacleavoidance")
-    agent_0 = DQN.load("rl_policy/dqn_obstacleavoidance_0")
-    agent_1 = DQN.load("rl_policy/dqn_obstacleavoidance_1")
+    model = DQN.load("rl_policy/dqn_models/dqn_obstacleavoidance")
+    agent_0 = DQN.load("rl_policy/dqn_models/dqn_obstacleavoidance_0")
+    agent_1 = DQN.load("rl_policy/dqn_models/dqn_obstacleavoidance_1")
     print("✅ Succesfully loaded pre-trained models")
 
-    # Define environment with current obstacle/goal to use has_obstacle flag
     env_class = lambda **kwargs: ObstacleAvoidance(
         x_obst=x_obst,
         y_obst=y_obst,
-        radius_obst=radius_obst if has_obstacle else 0.0,
+        radius_obst=radius_obst,
         x_goal=x_goal,
         y_goal=y_goal,
         **kwargs,
@@ -73,34 +69,30 @@ def initialize_models(
         for idy in range(resolution)
     ]
 
-    if has_obstacle:
-        M_star = find_critical_points(
-            initial_points,
-            state_difference,
-            model,
-            env_class,
-            min_state_difference=1e-2,
-            steps=5,
-            threshold=1e-1,
-            n_clusters=8,
-            custom_state_to_observation=state_to_observation_OA,
-            get_state_from_env=get_state_from_env_OA,
-            verbose=False,
-        )
-        M_star = M_star[np.argsort(M_star[:, 0])]
-        print("✅ Succesfully computed M_star")
-    else:
-        # No obstacle: minimal or no critical points (e.g., single region)
-        M_star = np.array([[x_goal, y_goal]])  # Simplistic, forces straight path
-        print("No obstacle: minimal M_star")
+    M_star = find_critical_points(
+        initial_points,
+        state_difference,
+        model,
+        env_class,
+        min_state_difference=1e-2,
+        steps=5,
+        threshold=1e-1,
+        n_clusters=8,
+        custom_state_to_observation=state_to_observation_OA,
+        get_state_from_env=get_state_from_env_OA,
+        verbose=False,
+    )
+    M_star = M_star[np.argsort(M_star[:, 0])]
+    print("✅ Succesfully computed M_star")
+
 
     # Build regions and extension regions
     print("✅ Initializing Build Regions")
     M_0 = M_i(M_star, index=0)
     M_1 = M_i(M_star, index=1) if len(M_star) > 1 else M_0  # Fallback if only one point
     print("✅ Succesfully built M_0 and M_1")
-    X_0 = find_X_i(M_0, model) if has_obstacle else [M_star[0]]  # Minimal extension
-    X_1 = find_X_i(M_1, model) if has_obstacle else [M_star[0]]
+    X_0 = find_X_i(M_0, model) # Minimal extension
+    X_1 = find_X_i(M_1, model)
     print("✅ Succesfully built X_0 and X_1")
     M_ext0 = M_ext(M_0, X_0)
     M_ext1 = M_ext(M_1, X_1)
@@ -108,27 +100,27 @@ def initialize_models(
 
     # Initialize hybrid agent
     hybrid_agent = HyRL_agent(agent_0, agent_1, M_ext0, M_ext1, q_init=0)
-    print("Succesfully initialized hybrid agent")
+    print("✅ Succesfully initialized hybrid agent")
 
     # simulation the hybrid agent compared to the original agent
-    print("Starting simulation")
-    starting_conditions = [
-        np.array([0.0, 0.0], dtype=np.float32),
-        np.array([0.0, 0.055], dtype=np.float32),
-        np.array([0.0, -0.055], dtype=np.float32),
-        np.array([0.0, 0.15], dtype=np.float32),
-        np.array([0.0, -0.15], dtype=np.float32),
-    ]
-    for q in range(2):
-        for state_init in starting_conditions:
-            hybrid_agent = HyRL_agent(agent_0, agent_1, M_ext0, M_ext1, q_init=q)
-            simulate_obstacleavoidance(
-                hybrid_agent, model, state_init, figure_number=3 + q
-            )
-        save_name = "OA_HyRLDQN_Sim_q" + str(q) + ".png"
-        plt.savefig(save_name, format="png")
-    print("saved png file")
-
+    if generate_sim_plot:
+        print("✅ Starting simulation")
+        starting_conditions = [
+            np.array([0.0, 0.0], dtype=np.float32),
+            np.array([0.0, 0.055], dtype=np.float32),
+            np.array([0.0, -0.055], dtype=np.float32),
+            np.array([0.0, 0.15], dtype=np.float32),
+            np.array([0.0, -0.15], dtype=np.float32),
+        ]
+        for q in range(2):
+            for state_init in starting_conditions:
+                hybrid_agent = HyRL_agent(agent_0, agent_1, M_ext0, M_ext1, q_init=q)
+                simulate_obstacleavoidance(
+                    hybrid_agent, model, state_init, figure_number=3 + q
+                )
+            save_name = "OA_HyRLDQN_Sim_q" + str(q) + ".png"
+            plt.savefig(save_name, format="png")
+        print("✅ saved png file")
 
 class DroneService(drone_grpc.DroneServiceBase):
     # Calls training_env -> train_agent -> HyRL -> utils
@@ -235,7 +227,7 @@ class DroneService(drone_grpc.DroneServiceBase):
             state,
             x_obst=obstacle_centroid[0],
             y_obst=obstacle_centroid[1],
-            radius_obst=obstacle_radius if has_obstacle else 0.0,
+            radius_obst=obstacle_radius,
             x_goal=goal_position[0],
             y_goal=goal_position[1],
         )
