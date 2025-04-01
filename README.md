@@ -23,5 +23,5 @@ grpcurl -plaintext \
 
   grpcurl -plaintext -d '{"drone_state": {"x": 1.0, "y": 0.5, "z": 0.0, "vx": 0.0, "vy": 0.0, "vz": 0.0, "roll": 0.0, "pitch": 0.0, "yaw": 0.0}}' 127.0.0.1:50051 dronecontrol.DroneService.GetDirection
 
-grpcurl -plaintext   -import-path ./p
-rotos   -proto drone.proto   -d '{"drone_state": {"x": 1.5, "y": 0, "z": 15.0, "vx": 0.0, "vy": 0.0, "vz": 0.0, "roll": 0.0, "pitch": 0.0, "yaw": 0.0}}'   127.0.0.1:50051 dronecontrol.DroneService.GetDirection
+grpcurl -plaintext   -import-path ./protos   -proto drone.proto   -d '{"drone_state": {"x": 1.5, "y": 0, "z": 15.0}}'   127.0.0.1:50051 dronecontrol.DroneService.GetDirection
+

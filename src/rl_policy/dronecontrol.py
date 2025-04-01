@@ -31,12 +31,6 @@ class DroneState(betterproto.Message):
     x: float = betterproto.float_field(1)
     y: float = betterproto.float_field(2)
     z: float = betterproto.float_field(3)
-    vx: float = betterproto.float_field(4)
-    vy: float = betterproto.float_field(5)
-    vz: float = betterproto.float_field(6)
-    roll: float = betterproto.float_field(7)
-    pitch: float = betterproto.float_field(8)
-    yaw: float = betterproto.float_field(9)
 
 
 @dataclass

@@ -16,14 +16,6 @@ message DroneState {
   float x = 1;
   float y = 2;
   float z = 3;
-
-   float vx = 4;
-   float vy = 5;
-   float vz = 6;
-
-   float roll = 7;
-   float pitch = 8;
-   float yaw = 9;
 }
 
 
