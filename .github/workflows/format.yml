@@ -1,0 +1,36 @@
+name: Format Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up Python 3.13
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      # Install uv
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      # Install dependencies with uv (including dev for Black)
+      - name: Install dependencies
+        run: |
+          uv sync --extra dev
+
+      # Check Python Black formatting
+      - name: Check Black formatting
+        run: |
+          uv run black --check src/

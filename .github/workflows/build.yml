@@ -1,0 +1,53 @@
+name: Build and Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up Nix
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixpkgs-unstable
+
+      # Enter Nix dev environment and run tests
+      - name: Build and test in Nix environment
+        run: |
+          nix develop --command bash -c "
+            # Install dependencies with uv
+            uv sync --extra dev
+            
+            # Generate gRPC bindings
+            uv run python -m grpc_tools.protoc -Iprotos --python_out=src/rl_policy --grpclib_python_out=src/rl_policy protos/drone.proto
+            
+            # Install grpcurl
+            curl -sSL https://github.com/fullstorydev/grpcurl/releases/download/v1.9.1/grpcurl_1.9.1_linux_x86_64.tar.gz | tar -xz -C /usr/local/bin grpcurl
+            
+            # Start the server in the background
+            make run &
+            sleep 5
+            
+            # Test SetEnvironment endpoint
+            grpcurl -plaintext -import-path protos -proto drone.proto -d '{\"vertex\": [], \"goal\": {\"x\": 3.0, \"y\": 0.0}}' 127.0.0.1:50051 dronecontrol.DroneService.SetEnvironment || {
+              if ! grep -q \"Code: Unimplemented\" <(grpcurl -plaintext -import-path protos -proto drone.proto -d '{\"vertex\": [], \"goal\": {\"x\": 3.0, \"y\": 0.0}}' 127.0.0.1:50051 dronecontrol.DroneService.SetEnvironment 2>&1); then
+                echo \"SetEnvironment did not return UNIMPLEMENTED as expected\"
+                exit 1
+              fi
+            }
+            
+            # Test GetDirection endpoint
+            grpcurl -plaintext -import-path protos -proto drone.proto -d '{\"drone_state\": {\"x\": 1.5, \"y\": 0, \"z\": 0.0}}' 127.0.0.1:50051 dronecontrol.DroneService.GetDirection > response.json
+            if ! grep -q '\"direction\":' response.json; then
+              echo \"GetDirection did not return a valid direction\"
+              exit 1
+            fi
+          "
