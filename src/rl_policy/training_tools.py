@@ -305,8 +305,10 @@ class HyRL_agent:
         self.M_ext1 = M_ext1
         self.q = q_init
 
-    def predict(self, state):
+
+    def predict(self, obs):  # Change to accept obs directly
         switch = -10
+        state = obs[:2]  # Extract [x, y] if obs is augmented
         if self.q == 0:
             if self.M_ext0.in_M_ext(state):
                 active_agent = self.agent_0
@@ -314,7 +316,6 @@ class HyRL_agent:
                 switch = 1
                 self.q = 1
                 active_agent = self.agent_1
-
         elif self.q == 1:
             if self.M_ext1.in_M_ext(state):
                 active_agent = self.agent_1
@@ -322,9 +323,7 @@ class HyRL_agent:
                 switch = 1
                 self.q = 0
                 active_agent = self.agent_0
-        action, _ = active_agent.predict(
-            state_to_observation_OA(state), deterministic=True
-        )
+        action, _ = active_agent.predict(obs, deterministic=True)  # Use obs directly
         return action, switch
 
 
