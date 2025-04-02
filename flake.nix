@@ -32,6 +32,10 @@
             # Add GCC library path to LD_LIBRARY_PATH
             export LD_LIBRARY_PATH=${pkgs.gcc.cc.lib}/lib:$LD_LIBRARY_PATH
             
+            # Add src to PATH
+            export PYTHONPATH=$PWD/src:$PYTHONPATH
+            uv sync --extra dev
+            
             # Create venv if it doesn't exist
             if [ ! -d ".venv" ]; then
               echo "📦 No .venv found, creating with uv..."
