@@ -13,6 +13,9 @@ BETTERPROTO_OUT = $(OUT_DIR)
 run:
 	cd src && PYTHONPATH=$$PWD python -m rl_policy.server
 
+test:
+	cd src && PYTHONPATH=$$PWD python -m rl_policy.client_sim
+
 # Command to generate all Python files from .proto
 protos:
 	python -m grpc_tools.protoc \

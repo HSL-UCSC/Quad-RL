@@ -23,3 +23,12 @@ dependencies = [
 [tool.setuptools]
 package-dir = { "" = "src" }
 packages = ["rl_policy"]
+
+[project.optional-dependencies]
+dev = [
+    "black>=24.8.0",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py313']
