@@ -304,22 +304,40 @@ class HyRL_agent:
         self.M_ext0 = M_ext0
         self.M_ext1 = M_ext1
         self.q = q_init
+        self.locked = False  # Flag to lock q after obstacle
 
     def predict(self, obs):
-        state = obs[:2]  # Extract [x, y] from [dist_obst, dist_goal, y]
-        if self.q == 0:
-            if self.M_ext0.in_M_ext(state):
-                active_agent = self.agent_0
-            else:
-                self.q = 1
-                active_agent = self.agent_1
-        elif self.q == 1:
-            if self.M_ext1.in_M_ext(state):
-                active_agent = self.agent_1
-            else:
-                self.q = 0
-                active_agent = self.agent_0
-        action, _ = active_agent.predict(obs, deterministic=True)  # Use obs directly
+        state = obs[:2]
+        dist_obst = np.sqrt((state[0] - 1.5)**2 + (state[1] - 0)**2) - 0.75
+        
+        # Lock q after passing obstacle (x > 2.25)
+        if state[0] > 2.25 and not self.locked:
+            self.locked = True
+            print(f"Locked q at {self.q} after obstacle at {state}")
+
+        if not self.locked:
+            # Hysteresis: only switch if distance from current region's edge exceeds threshold
+            if self.q == 0:
+                if self.M_ext0.in_M_ext(state):
+                    active_agent = self.agent_0
+                elif self.M_ext1.in_M_ext(state) and abs(state[1]) > 0.1:  # Threshold
+                    self.q = 1
+                    active_agent = self.agent_1
+                else:
+                    active_agent = self.agent_0
+            else:  # q == 1
+                if self.M_ext1.in_M_ext(state):
+                    active_agent = self.agent_1
+                elif self.M_ext0.in_M_ext(state) and abs(state[1]) > 0.1:  # Threshold
+                    self.q = 0
+                    active_agent = self.agent_0
+                else:
+                    active_agent = self.agent_1
+        else:
+            active_agent = self.agent_0 if self.q == 0 else self.agent_1
+
+        action, _ = active_agent.predict(obs, deterministic=True)
+        print(f"State: {state}, Region: {'M_ext0' if self.q == 0 else 'M_ext1'}, Action: {action}, Locked: {self.locked}")
         return action, self.q
 
 def simulate_obstacleavoidance(

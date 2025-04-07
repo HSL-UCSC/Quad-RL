@@ -6,19 +6,15 @@ from . import drone_pb2
 from . import drone_grpc
 import time
 
-# Server connection details
 HOST = "127.0.0.1"
 PORT = 50051
-
-# Environment parameters
 X_MAX = 3.0
 Y_MAX = 1.5
 OBSTACLE_CENTER = (1.5, 0.0)
 OBSTACLE_RADIUS = 0.75
-STEP_SIZE = 0.05  # Distance per step
-NOISE_MAG = 0.1   # Matches simulate_obstacleavoidance
+STEP_SIZE = 0.05
+NOISE_MAG = 0.02  # Further reduced for smoothness
 
-# Direction angles (degrees) and colors
 DIRECTION_CONFIG = {
     drone_pb2.STRAIGHT: {"angle": 0, "color": "blue", "label": "Straight"},
     drone_pb2.LEFT: {"angle": 15, "color": "green", "label": "Left"},
@@ -28,69 +24,69 @@ DIRECTION_CONFIG = {
 }
 
 async def get_direction(channel, x, y, z=0.0):
-    """Query the GetDirection endpoint."""
     stub = drone_grpc.DroneServiceStub(channel)
     request = drone_pb2.DirectionRequest(drone_state=drone_pb2.DroneState(x=x, y=y, z=z))
     start_time = time.time()
     response = await stub.GetDirection(request)
     return response.discrete_heading.direction, time.time() - start_time
 
-def update_state(state, direction, noise):
-    """Update state based on direction and noise, avoiding obstacle."""
+def update_state(state, direction, noise, prev_states, window=5):
+    """Update state with smoothing, obstacle avoidance, and goal bias."""
     config = DIRECTION_CONFIG[direction]
     angle_rad = np.deg2rad(config["angle"])
     dx = np.cos(angle_rad) * STEP_SIZE
     dy = np.sin(angle_rad) * STEP_SIZE
     proposed_state = state + np.array([dx, dy], dtype=np.float32)
-    proposed_state += np.array([0, noise], dtype=np.float32)  # Add noise
+    proposed_state += np.array([0, noise], dtype=np.float32)
 
-    # Check distance to obstacle
+    # Stronger smoothing
+    if len(prev_states) >= window:
+        avg_state = np.mean(prev_states[-window:], axis=0)
+        proposed_state = 0.5 * proposed_state + 0.5 * avg_state
+
+    # Obstacle avoidance
     dist_obst = np.sqrt((proposed_state[0] - OBSTACLE_CENTER[0])**2 + 
                         (proposed_state[1] - OBSTACLE_CENTER[1])**2)
-    
-    # If too close to obstacle, adjust direction away
-    if dist_obst < OBSTACLE_RADIUS + 0.1:  # Buffer zone
-        # Vector from obstacle to current position
+    if dist_obst < OBSTACLE_RADIUS + 0.1:
         away_vector = proposed_state - np.array(OBSTACLE_CENTER, dtype=np.float32)
-        away_vector /= np.linalg.norm(away_vector)  # Normalize
-        # Move away instead of colliding
+        away_vector /= np.linalg.norm(away_vector)
         proposed_state = state + away_vector * STEP_SIZE
-    
-    # Clip to bounds
+
+    # Goal bias after obstacle (x > 2.25)
+    if proposed_state[0] > 2.25:
+        goal_vector = np.array([3.0, 0.0], dtype=np.float32) - proposed_state
+        goal_vector /= max(np.linalg.norm(goal_vector), 0.01)  # Avoid division by zero
+        proposed_state += goal_vector * STEP_SIZE * 0.5  # Bias toward goal
+
     proposed_state[0] = np.clip(proposed_state[0], 0, X_MAX)
     proposed_state[1] = np.clip(proposed_state[1], -Y_MAX, Y_MAX)
     return proposed_state
 
 def is_done(state):
-    """Check termination conditions with collision detection."""
     x, y = state
     dist_goal = np.sqrt((x - 3.0)**2 + (y - 0.0)**2)
     dist_obst = np.sqrt((x - 1.5)**2 + (y - 0.0)**2) - OBSTACLE_RADIUS
-    # Terminate if at goal, past bounds, or colliding
     return (dist_goal < 0.1 or x >= X_MAX or dist_obst <= 0)
 
 async def simulate_trajectory(channel, state_init):
-    """Simulate a trajectory from an initial state using GetDirection."""
     state = np.array(state_init, dtype=np.float32)
     states = [state.copy()]
-    sign = 1  # Alternating noise sign
+    sign = 1
     response_times = []
 
     while not is_done(state):
         noise = NOISE_MAG * sign
         direction, response_time = await get_direction(channel, state[0], state[1])
-        state = update_state(state, direction, noise)
+        state = update_state(state, direction, noise, states)
         states.append(state.copy())
         response_times.append(response_time)
         print(f"State: {state}, Direction: {drone_pb2.HeadingDirection.Name(direction)}, "
-              f"Dist to Obst: {np.sqrt((state[0] - 1.5)**2 + (state[1] - 0)**2) - OBSTACLE_RADIUS:.3f}, "
-              f"Time: {response_time:.4f}s")
+              f"Dist to Obst: {dist_obst:.3f}, Dist to Goal: {dist_goal:.3f}, Time: {response_time:.4f}s")
         sign *= -1
 
     return np.array(states), response_times
 
 async def simulate_client():
-    """Run trajectory simulations for multiple starting points."""
     starting_conditions = [
         np.array([0.0, 0.0], dtype=np.float32),
         np.array([0.0, 0.055], dtype=np.float32),
@@ -114,14 +110,11 @@ async def simulate_client():
         plot_trajectories(all_states)
 
 def plot_trajectories(all_states):
-    """Plot trajectories with obstacle and legend."""
     fig, ax = plt.subplots(figsize=(12, 8))
-
-    # Plot obstacle
     obstacle = plt.Circle(OBSTACLE_CENTER, OBSTACLE_RADIUS, color="red", alpha=0.5, label="Obstacle")
     ax.add_patch(obstacle)
-
-    # Plot each trajectory
+    goal = plt.scatter([3.0], [0.0], color="black", marker="*", s=100, label="Goal")
+    
     colors = ['blue', 'green', 'cyan', 'orange', 'red']
     for i, states in enumerate(all_states):
         ax.plot(states[:, 0], states[:, 1], color=colors[i % len(colors)], linewidth=2,
@@ -133,11 +126,11 @@ def plot_trajectories(all_states):
     ax.set_ylim(-Y_MAX, Y_MAX)
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
-    ax.set_title("Trajectory Simulation with Obstacle Avoidance")
+    ax.set_title("Smoothed Trajectory Simulation with Goal Seeking")
     ax.grid(True)
     ax.legend(loc="upper right")
 
-    plt.savefig("trajectory_simulation_avoidance.png")
+    plt.savefig("trajectory_simulation_goal.png")
     plt.show()
 
 if __name__ == "__main__":
