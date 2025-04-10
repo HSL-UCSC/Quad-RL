@@ -304,29 +304,41 @@ class HyRL_agent:
         self.M_ext0 = M_ext0
         self.M_ext1 = M_ext1
         self.q = q_init
+        self.locked = False  # Flag to lock q after obstacle
 
-    def predict(self, state):
-        switch = -10
-        if self.q == 0:
-            if self.M_ext0.in_M_ext(state):
-                active_agent = self.agent_0
-            else:
-                switch = 1
-                self.q = 1
-                active_agent = self.agent_1
+    def predict(self, obs):
+        state = obs[:2]
+        dist_obst = np.sqrt((state[0] - 1.5)**2 + (state[1] - 0)**2) - 0.75
+        
+        # Lock q after passing obstacle (x > 2.25)
+        if state[0] > 2.25 and not self.locked:
+            self.locked = True
+            print(f"Locked q at {self.q} after obstacle at {state}")
 
-        elif self.q == 1:
-            if self.M_ext1.in_M_ext(state):
-                active_agent = self.agent_1
-            else:
-                switch = 1
-                self.q = 0
-                active_agent = self.agent_0
-        action, _ = active_agent.predict(
-            state_to_observation_OA(state), deterministic=True
-        )
-        return action, switch
+        if not self.locked:
+            # Hysteresis: only switch if distance from current region's edge exceeds threshold
+            if self.q == 0:
+                if self.M_ext0.in_M_ext(state):
+                    active_agent = self.agent_0
+                elif self.M_ext1.in_M_ext(state) and abs(state[1]) > 0.1:  # Threshold
+                    self.q = 1
+                    active_agent = self.agent_1
+                else:
+                    active_agent = self.agent_0
+            else:  # q == 1
+                if self.M_ext1.in_M_ext(state):
+                    active_agent = self.agent_1
+                elif self.M_ext0.in_M_ext(state) and abs(state[1]) > 0.1:  # Threshold
+                    self.q = 0
+                    active_agent = self.agent_0
+                else:
+                    active_agent = self.agent_1
+        else:
+            active_agent = self.agent_0 if self.q == 0 else self.agent_1
 
+        action, _ = active_agent.predict(obs, deterministic=True)
+        print(f"State: {state}, Region: {'M_ext0' if self.q == 0 else 'M_ext1'}, Action: {action}, Locked: {self.locked}")
+        return action, self.q
 
 def simulate_obstacleavoidance(
     hybrid_agent,
@@ -341,19 +353,23 @@ def simulate_obstacleavoidance(
     done = False
     state_or, state_hyb = state_init, state_init
     states_or, states_hyb = [state_or], [state_hyb]
-    _, switch = hybrid_agent.predict(state_hyb)
+    # Compute initial observation for hybrid agent
+    obs_hyb = state_to_observation_OA(state_hyb)  # Add this
+    _, switch = hybrid_agent.predict(obs_hyb)  # Use obs_hyb, not state_hyb
     switches = []
     score_or, score_hyb = 0, 0
     sign = 1
     stop_appending_or, stop_appending_hyb = False, False
-    while done == False:
+    while not done:
         noise = noise_mag * sign
         disturbance = np.array([0, noise], dtype=np.float32)
 
-        action_or, _ = original_agent.predict(
-            state_to_observation_OA(state_or + disturbance), deterministic=True
-        )
-        action_hyb, switch = hybrid_agent.predict(state_hyb + disturbance)
+        # Apply disturbance and compute observations
+        obs_or = state_to_observation_OA(state_or + disturbance)
+        obs_hyb = state_to_observation_OA(state_hyb + disturbance)
+
+        action_or, _ = original_agent.predict(obs_or, deterministic=True)
+        action_hyb, switch = hybrid_agent.predict(obs_hyb)  # Use obs_hyb
 
         env_or.state = state_or
         env_hyb.state = state_hyb
@@ -365,19 +381,19 @@ def simulate_obstacleavoidance(
 
         if env_or.terminate:
             stop_appending_or = True
-        if stop_appending_or == False:
+        if not stop_appending_or:
             states_or.append(state_or)
             score_or += reward_or
 
         if env_hyb.terminate:
             stop_appending_hyb = True
-        if stop_appending_hyb == False:
+        if not stop_appending_hyb:
             states_hyb.append(state_hyb)
             score_hyb += reward_hyb
             switches.append(switch * states_hyb[-1])
 
         sign *= -1
-
+        
     plt.figure(figure_number)
     plt.plot(
         np.array(states_hyb)[:, 0], np.array(states_hyb)[:, 1], "blue", linewidth=3

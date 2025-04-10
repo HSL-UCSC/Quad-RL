@@ -37,9 +37,8 @@ obstacle_radius = 0.75  # Default radius
 goal_position = [3.0, 0.0]  # Default [x_goal, y_goal]
 generate_sim_plot = False
 
-def initialize_models(
-    x_obst=1.5, y_obst=0.0, radius_obst=0.75, x_goal=3.0, y_goal=0.0
-):
+
+def initialize_models():
     global model, agent_0, agent_1, M_ext0, M_ext1, hybrid_agent
 
     # Load pre-trained models
@@ -48,32 +47,21 @@ def initialize_models(
     agent_1 = DQN.load("rl_policy/dqn_models/dqn_obstacleavoidance_1")
     print("✅ Succesfully loaded pre-trained models")
 
-    env_class = lambda **kwargs: ObstacleAvoidance(
-        x_obst=x_obst,
-        y_obst=y_obst,
-        radius_obst=radius_obst,
-        x_goal=x_goal,
-        y_goal=y_goal,
-        **kwargs,
-    )
-    print("✅ Succesfully defined environment")
-
     # Compute critical points (simplify if no obstacle)
     resolution = 30
     x_ = np.linspace(0, 3, resolution)
     y_ = np.linspace(-1.5, 1.5, resolution)
     state_difference = np.linalg.norm(np.array([x_[1] - x_[0], y_[1] - y_[0]]))
-    initial_points = [
-        np.array([x_[idx], y_[idy]], dtype=np.float32)
-        for idx in range(resolution)
-        for idy in range(resolution)
-    ]
+    initial_points = []
+    for idx in range(resolution):
+        for idy in range(resolution):
+            initial_points.append(np.array([x_[idx], y_[idy]], dtype=np.float32))
 
     M_star = find_critical_points(
         initial_points,
         state_difference,
         model,
-        env_class,
+        ObstacleAvoidance,
         min_state_difference=1e-2,
         steps=5,
         threshold=1e-1,
@@ -85,13 +73,12 @@ def initialize_models(
     M_star = M_star[np.argsort(M_star[:, 0])]
     print("✅ Succesfully computed M_star")
 
-
     # Build regions and extension regions
     print("✅ Initializing Build Regions")
     M_0 = M_i(M_star, index=0)
     M_1 = M_i(M_star, index=1) if len(M_star) > 1 else M_0  # Fallback if only one point
     print("✅ Succesfully built M_0 and M_1")
-    X_0 = find_X_i(M_0, model) # Minimal extension
+    X_0 = find_X_i(M_0, model)  # Minimal extension
     X_1 = find_X_i(M_1, model)
     print("✅ Succesfully built X_0 and X_1")
     M_ext0 = M_ext(M_0, X_0)
@@ -121,6 +108,7 @@ def initialize_models(
             save_name = "OA_HyRLDQN_Sim_q" + str(q) + ".png"
             plt.savefig(save_name, format="png")
         print("✅ saved png file")
+
 
 class DroneService(drone_grpc.DroneServiceBase):
     # Calls training_env -> train_agent -> HyRL -> utils
@@ -217,20 +205,11 @@ class DroneService(drone_grpc.DroneServiceBase):
         print(f"Received drone state: {request}")
 
         # Extract 2D position
-        state = np.array(
-            [request.drone_state.x, request.drone_state.y], dtype=np.float32
-        )
+        state = np.array([request.drone_state.x, request.drone_state.y])
         print(f"Drone State:  {state}")
 
         # Compute observation
-        obs = state_to_observation_OA(
-            state,
-            x_obst=obstacle_centroid[0],
-            y_obst=obstacle_centroid[1],
-            radius_obst=obstacle_radius,
-            x_goal=goal_position[0],
-            y_goal=goal_position[1],
-        )
+        obs = state_to_observation_OA(state)
         print(f"observation: {obs}")
 
         # Get action from hybrid agent

@@ -16,6 +16,9 @@ run:
 test:
 	cd src && PYTHONPATH=$$PWD python -m rl_policy.client_sim
 
+test_path:
+	cd src && PYTHONPATH=$$PWD python -m rl_policy.client_sim_path
+
 # Command to generate all Python files from .proto
 protos:
 	python -m grpc_tools.protoc \
