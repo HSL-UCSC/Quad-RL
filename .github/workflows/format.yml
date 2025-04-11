@@ -1,4 +1,4 @@
-name: Format Check
+name: Format and Commit
 
 on:
   push:
@@ -9,9 +9,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the repository
+      # Checkout the repository with full history for git operations
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for git diff
 
       # Set up Python 3.13
       - name: Set up Python 3.13
@@ -30,7 +32,31 @@ jobs:
         run: |
           uv sync --extra dev
 
-      # Check Python Black formatting
-      - name: Check Black formatting
+      # Run Black to reformat code and capture changes
+      - name: Reformat with Black
         run: |
-          uv run black --check src/
+          # Run Black to reformat and capture output
+          uv run black src/ > black_output.txt 2>&1 || true
+          # Check if any files were reformatted by looking for "reformatted" in output
+          if grep -q "reformatted" black_output.txt; then
+            echo "Files were reformatted by Black:"
+            grep "reformatted" black_output.txt | awk '{print $2}'
+          else
+            echo "No files needed reformatting."
+          fi
+
+      # Commit and push changes if any files were reformatted
+      - name: Commit reformatted files
+        run: |
+          # Check if there are changes to commit
+          if git diff --exit-code; then
+            echo "No changes to commit."
+          else
+            git config --global user.name "GitHub Action"
+            git config --global user.email "action@github.com"
+            git add .
+            git commit -m "style: auto-reformat with Black"
+            git push
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
