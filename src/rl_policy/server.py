@@ -1,6 +1,5 @@
 import asyncio
 import signal
-import time
 import numpy as np
 import matplotlib.pyplot as plt
 from grpclib.server import Server
@@ -21,21 +20,15 @@ from .training_tools import (
     simulate_obstacleavoidance,
 )
 
-start = time.time()
-print(f"Total import time before main: {time.time() - start:.2f}s")
-
 # Global variables for models and environment
 model = None
 agent_0 = None
 agent_1 = None
+hybrid_agent = None
 M_ext0 = None
 M_ext1 = None
-hybrid_agent = None
 obstacle_vertices = None
-obstacle_centroid = [1.5, 0.0]  # Default [x_obst, y_obst]
-obstacle_radius = 0.75  # Default radius
-goal_position = [3.0, 0.0]  # Default [x_goal, y_goal]
-generate_sim_plot = False
+generate_sim_plot = False  # Used to generate simulation plots
 
 
 def initialize_models():
@@ -74,7 +67,6 @@ def initialize_models():
     print("✅ Succesfully computed M_star")
 
     # Build regions and extension regions
-    print("✅ Initializing Build Regions")
     M_0 = M_i(M_star, index=0)
     M_1 = M_i(M_star, index=1) if len(M_star) > 1 else M_0  # Fallback if only one point
     print("✅ Succesfully built M_0 and M_1")
@@ -89,7 +81,7 @@ def initialize_models():
     hybrid_agent = HyRL_agent(agent_0, agent_1, M_ext0, M_ext1, q_init=0)
     print("✅ Succesfully initialized hybrid agent")
 
-    # simulation the hybrid agent compared to the original agent
+    # Simulate the hybrid agent compared to the original agent
     if generate_sim_plot:
         print("✅ Starting simulation")
         starting_conditions = [
@@ -117,8 +109,10 @@ class DroneService(drone_grpc.DroneServiceBase):
             status=Status.UNIMPLEMENTED,
             message="The SetEnvironment endpoint is deprecated.",
         )
-
         global obstacle_centroid, obstacle_radius, goal_position, hybrid_agent, M_ext0, M_ext1
+        obstacle_centroid = [1.5, 0.0]
+        obstacle_radius = 0.75
+        goal_position = [3.0, 0.0]
         request: drone_pb2.SetEnvironmentRequest = await stream.recv_message()
         vertices = [(p.x, p.y, p.z) for v in request.vertex for p in v.vertices]
         print(
@@ -204,23 +198,13 @@ class DroneService(drone_grpc.DroneServiceBase):
         request: drone_pb2.DirectionRequest = await stream.recv_message()
         print(f"Received drone state: {request}")
 
-        # Extract 2D position
         state = np.array([request.drone_state.x, request.drone_state.y])
-        print(f"Drone State:  {state}")
-
-        # Compute observation
         obs = state_to_observation_OA(state)
-        print(f"observation: {obs}")
-
-        # Get action from hybrid agent
-        action_array, extra = hybrid_agent.predict(obs)  # Unpack tuple
-        print(f"Raw action array: {action_array}")
-        print(f"Extra value: {extra}")
+        action_array, _ = hybrid_agent.predict(obs)
         if isinstance(action_array, np.ndarray):
             action = float(action_array.item())
         else:
             action = float(action_array)
-        print(f"Predicted action (scalar): {action}")
 
         direction_map = {
             0: drone_pb2.STRAIGHT,  # 1
@@ -229,12 +213,8 @@ class DroneService(drone_grpc.DroneServiceBase):
             3: drone_pb2.RIGHT,  # 4
             4: drone_pb2.HARD_RIGHT,  # 5
         }
-
-        direction = direction_map.get(
-            action, drone_pb2.STRAIGHT
-        )  # Default to STRAIGHT (1), never RESERVED (0)
-        print(f"Mapped direction: {direction}")
-
+        direction = direction_map.get(action, drone_pb2.STRAIGHT)
+        
         # Send response
         heading = drone_pb2.DiscreteHeading()
         heading.direction = direction
@@ -263,7 +243,7 @@ async def main():
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, shutdown)
 
-    # Wait for shutdown signal
+    # Wait for Ctrl+c shutdown signal
     await stop.wait()
     server.close()
     await server.wait_closed()
@@ -272,6 +252,4 @@ async def main():
 
 if __name__ == "__main__":
     print("Starting gRPC server...")
-    serverStart = time.time() - start
-    print(f"Time taken from import to server start: {serverStart:.2f} seconds")
     asyncio.run(main())

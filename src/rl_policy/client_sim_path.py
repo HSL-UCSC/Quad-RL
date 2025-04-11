@@ -35,7 +35,6 @@ async def get_direction(channel, x, y, z=0.0):
 
 
 def update_state(state, direction, noise, prev_states, window=5):
-    """Update state with enhanced smoothing, obstacle avoidance, and goal bias."""
     config = DIRECTION_CONFIG[direction]
     angle_rad = np.deg2rad(config["angle"])
     dx = np.cos(angle_rad) * STEP_SIZE
