@@ -9,48 +9,44 @@ from google.protobuf import descriptor_pool as _descriptor_pool
 from google.protobuf import runtime_version as _runtime_version
 from google.protobuf import symbol_database as _symbol_database
 from google.protobuf.internal import builder as _builder
+
 _runtime_version.ValidateProtobufRuntimeVersion(
-    _runtime_version.Domain.PUBLIC,
-    5,
-    29,
-    0,
-    '',
-    'drone.proto'
+    _runtime_version.Domain.PUBLIC, 5, 29, 0, "", "drone.proto"
 )
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
 
 
-
-
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0b\x64rone.proto\x12\x0c\x64ronecontrol\"A\n\x10\x44irectionRequest\x12-\n\x0b\x64rone_state\x18\x01 \x01(\x0b\x32\x18.dronecontrol.DroneState\"-\n\nDroneState\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\"\x9d\x01\n\x11\x44irectionResponse\x12\x39\n\x10\x64iscrete_heading\x18\x02 \x01(\x0b\x32\x1d.dronecontrol.DiscreteHeadingH\x00\x12=\n\x12\x63ontinuous_heading\x18\x03 \x01(\x0b\x32\x1f.dronecontrol.ContinuousHeadingH\x00\x42\x0e\n\x0c\x63ontrol_type\"D\n\x0f\x44iscreteHeading\x12\x31\n\tdirection\x18\x01 \x01(\x0e\x32\x1e.dronecontrol.HeadingDirection\" \n\x11\x43ontinuousHeading\x12\x0b\n\x03rad\x18\x01 \x01(\x02\"`\n\x15SetEnvironmentRequest\x12$\n\x06vertex\x18\x01 \x03(\x0b\x32\x14.dronecontrol.Vertex\x12!\n\x04goal\x18\x02 \x01(\x0b\x32\x13.dronecontrol.Point\"/\n\x06Vertex\x12%\n\x08vertices\x18\x01 \x03(\x0b\x32\x13.dronecontrol.Point\"(\n\x05Point\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\")\n\x16SetEnvironmentResponse\x12\x0f\n\x07message\x18\x01 \x01(\t*b\n\x10HeadingDirection\x12\x0c\n\x08RESERVED\x10\x00\x12\x0c\n\x08STRAIGHT\x10\x01\x12\x08\n\x04LEFT\x10\x02\x12\r\n\tHARD_LEFT\x10\x03\x12\t\n\x05RIGHT\x10\x04\x12\x0e\n\nHARD_RIGHT\x10\x05\x32\xbc\x01\n\x0c\x44roneService\x12[\n\x0eSetEnvironment\x12#.dronecontrol.SetEnvironmentRequest\x1a$.dronecontrol.SetEnvironmentResponse\x12O\n\x0cGetDirection\x12\x1e.dronecontrol.DirectionRequest\x1a\x1f.dronecontrol.DirectionResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
+    b'\n\x0b\x64rone.proto\x12\x0c\x64ronecontrol"A\n\x10\x44irectionRequest\x12-\n\x0b\x64rone_state\x18\x01 \x01(\x0b\x32\x18.dronecontrol.DroneState"-\n\nDroneState\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02"\x9d\x01\n\x11\x44irectionResponse\x12\x39\n\x10\x64iscrete_heading\x18\x02 \x01(\x0b\x32\x1d.dronecontrol.DiscreteHeadingH\x00\x12=\n\x12\x63ontinuous_heading\x18\x03 \x01(\x0b\x32\x1f.dronecontrol.ContinuousHeadingH\x00\x42\x0e\n\x0c\x63ontrol_type"D\n\x0f\x44iscreteHeading\x12\x31\n\tdirection\x18\x01 \x01(\x0e\x32\x1e.dronecontrol.HeadingDirection" \n\x11\x43ontinuousHeading\x12\x0b\n\x03rad\x18\x01 \x01(\x02"`\n\x15SetEnvironmentRequest\x12$\n\x06vertex\x18\x01 \x03(\x0b\x32\x14.dronecontrol.Vertex\x12!\n\x04goal\x18\x02 \x01(\x0b\x32\x13.dronecontrol.Point"/\n\x06Vertex\x12%\n\x08vertices\x18\x01 \x03(\x0b\x32\x13.dronecontrol.Point"(\n\x05Point\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02")\n\x16SetEnvironmentResponse\x12\x0f\n\x07message\x18\x01 \x01(\t*b\n\x10HeadingDirection\x12\x0c\n\x08RESERVED\x10\x00\x12\x0c\n\x08STRAIGHT\x10\x01\x12\x08\n\x04LEFT\x10\x02\x12\r\n\tHARD_LEFT\x10\x03\x12\t\n\x05RIGHT\x10\x04\x12\x0e\n\nHARD_RIGHT\x10\x05\x32\xbc\x01\n\x0c\x44roneService\x12[\n\x0eSetEnvironment\x12#.dronecontrol.SetEnvironmentRequest\x1a$.dronecontrol.SetEnvironmentResponse\x12O\n\x0cGetDirection\x12\x1e.dronecontrol.DirectionRequest\x1a\x1f.dronecontrol.DirectionResponseb\x06proto3'
+)
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
-_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'drone_pb2', _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, "drone_pb2", _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
-  DESCRIPTOR._loaded_options = None
-  _globals['_HEADINGDIRECTION']._serialized_start=639
-  _globals['_HEADINGDIRECTION']._serialized_end=737
-  _globals['_DIRECTIONREQUEST']._serialized_start=29
-  _globals['_DIRECTIONREQUEST']._serialized_end=94
-  _globals['_DRONESTATE']._serialized_start=96
-  _globals['_DRONESTATE']._serialized_end=141
-  _globals['_DIRECTIONRESPONSE']._serialized_start=144
-  _globals['_DIRECTIONRESPONSE']._serialized_end=301
-  _globals['_DISCRETEHEADING']._serialized_start=303
-  _globals['_DISCRETEHEADING']._serialized_end=371
-  _globals['_CONTINUOUSHEADING']._serialized_start=373
-  _globals['_CONTINUOUSHEADING']._serialized_end=405
-  _globals['_SETENVIRONMENTREQUEST']._serialized_start=407
-  _globals['_SETENVIRONMENTREQUEST']._serialized_end=503
-  _globals['_VERTEX']._serialized_start=505
-  _globals['_VERTEX']._serialized_end=552
-  _globals['_POINT']._serialized_start=554
-  _globals['_POINT']._serialized_end=594
-  _globals['_SETENVIRONMENTRESPONSE']._serialized_start=596
-  _globals['_SETENVIRONMENTRESPONSE']._serialized_end=637
-  _globals['_DRONESERVICE']._serialized_start=740
-  _globals['_DRONESERVICE']._serialized_end=928
+    DESCRIPTOR._loaded_options = None
+    _globals["_HEADINGDIRECTION"]._serialized_start = 639
+    _globals["_HEADINGDIRECTION"]._serialized_end = 737
+    _globals["_DIRECTIONREQUEST"]._serialized_start = 29
+    _globals["_DIRECTIONREQUEST"]._serialized_end = 94
+    _globals["_DRONESTATE"]._serialized_start = 96
+    _globals["_DRONESTATE"]._serialized_end = 141
+    _globals["_DIRECTIONRESPONSE"]._serialized_start = 144
+    _globals["_DIRECTIONRESPONSE"]._serialized_end = 301
+    _globals["_DISCRETEHEADING"]._serialized_start = 303
+    _globals["_DISCRETEHEADING"]._serialized_end = 371
+    _globals["_CONTINUOUSHEADING"]._serialized_start = 373
+    _globals["_CONTINUOUSHEADING"]._serialized_end = 405
+    _globals["_SETENVIRONMENTREQUEST"]._serialized_start = 407
+    _globals["_SETENVIRONMENTREQUEST"]._serialized_end = 503
+    _globals["_VERTEX"]._serialized_start = 505
+    _globals["_VERTEX"]._serialized_end = 552
+    _globals["_POINT"]._serialized_start = 554
+    _globals["_POINT"]._serialized_end = 594
+    _globals["_SETENVIRONMENTRESPONSE"]._serialized_start = 596
+    _globals["_SETENVIRONMENTRESPONSE"]._serialized_end = 637
+    _globals["_DRONESERVICE"]._serialized_start = 740
+    _globals["_DRONESERVICE"]._serialized_end = 928
 # @@protoc_insertion_point(module_scope)

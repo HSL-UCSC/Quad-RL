@@ -214,7 +214,7 @@ class DroneService(drone_grpc.DroneServiceBase):
             4: drone_pb2.HARD_RIGHT,  # 5
         }
         direction = direction_map.get(action, drone_pb2.STRAIGHT)
-        
+
         # Send response
         heading = drone_pb2.DiscreteHeading()
         heading.direction = direction

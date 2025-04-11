@@ -101,7 +101,9 @@ def plot_directions(points, directions):
     ax.set_ylim(-Y_MAX, Y_MAX)
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
-    ax.set_title("Simulation of DQN Hybrid Agent Responses Using RPC Server Based Responses")
+    ax.set_title(
+        "Simulation of DQN Hybrid Agent Responses Using RPC Server Based Responses"
+    )
     ax.grid(True)
 
     # Add legend
