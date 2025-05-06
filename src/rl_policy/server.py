@@ -31,7 +31,7 @@ obstacle_vertices = None
 generate_sim_plot = False  # Used to generate simulation plots
 
 
-def initialize_models():
+def __Init__():
     global model, agent_0, agent_1, M_ext0, M_ext1, hybrid_agent
 
     # Load pre-trained models
@@ -226,7 +226,7 @@ class DroneService(drone_grpc.DroneServiceBase):
 async def main():
     # Initialize models and hybrid agent at startup
     print("Initializing RL models...")
-    initialize_models()
+    __Init__()
 
     server = Server([DroneService()])
     await server.start("127.0.0.1", 50051)
