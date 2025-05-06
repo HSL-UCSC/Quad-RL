@@ -37,7 +37,7 @@ jobs:
             
             # Start the server in the background
             make run &
-            sleep 5
+            sleep 120
             
             # Test GetDirection endpoint
             grpcurl -plaintext -import-path protos -proto drone.proto -d '{\"drone_state\": {\"x\": 1.5, \"y\": 0, \"z\": 0.0}}' 127.0.0.1:50051 dronecontrol.DroneService.GetDirection > response.json
