@@ -162,12 +162,12 @@ def plot_trajectories(all_states):
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
     ax.set_title(
-        "Smoothed Trajectory Simulation with Enhanced Avoidance and Goal Seeking"
+        "Trajectory Simulation"
     )
     ax.grid(True)
     ax.legend(loc="upper right")
 
-    plt.savefig("trajectory_simulation_goal_enhanced.png")
+    plt.savefig("trajectory_simulation.png")
     plt.show()
 
 

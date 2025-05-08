@@ -6,7 +6,6 @@ import typing
 
 import grpclib.const
 import grpclib.client
-
 if typing.TYPE_CHECKING:
     import grpclib.server
 
@@ -16,28 +15,12 @@ import drone_pb2
 class DroneServiceBase(abc.ABC):
 
     @abc.abstractmethod
-    async def SetEnvironment(
-        self,
-        stream: "grpclib.server.Stream[drone_pb2.SetEnvironmentRequest, drone_pb2.SetEnvironmentResponse]",
-    ) -> None:
-        pass
-
-    @abc.abstractmethod
-    async def GetDirection(
-        self,
-        stream: "grpclib.server.Stream[drone_pb2.DirectionRequest, drone_pb2.DirectionResponse]",
-    ) -> None:
+    async def GetDirection(self, stream: 'grpclib.server.Stream[drone_pb2.DirectionRequest, drone_pb2.DirectionResponse]') -> None:
         pass
 
     def __mapping__(self) -> typing.Dict[str, grpclib.const.Handler]:
         return {
-            "/dronecontrol.DroneService/SetEnvironment": grpclib.const.Handler(
-                self.SetEnvironment,
-                grpclib.const.Cardinality.UNARY_UNARY,
-                drone_pb2.SetEnvironmentRequest,
-                drone_pb2.SetEnvironmentResponse,
-            ),
-            "/dronecontrol.DroneService/GetDirection": grpclib.const.Handler(
+            '/dronecontrol.DroneService/GetDirection': grpclib.const.Handler(
                 self.GetDirection,
                 grpclib.const.Cardinality.UNARY_UNARY,
                 drone_pb2.DirectionRequest,
@@ -49,15 +32,9 @@ class DroneServiceBase(abc.ABC):
 class DroneServiceStub:
 
     def __init__(self, channel: grpclib.client.Channel) -> None:
-        self.SetEnvironment = grpclib.client.UnaryUnaryMethod(
-            channel,
-            "/dronecontrol.DroneService/SetEnvironment",
-            drone_pb2.SetEnvironmentRequest,
-            drone_pb2.SetEnvironmentResponse,
-        )
         self.GetDirection = grpclib.client.UnaryUnaryMethod(
             channel,
-            "/dronecontrol.DroneService/GetDirection",
+            '/dronecontrol.DroneService/GetDirection',
             drone_pb2.DirectionRequest,
             drone_pb2.DirectionResponse,
         )

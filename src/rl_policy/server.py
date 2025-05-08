@@ -20,25 +20,13 @@ from .training_tools import (
     simulate_obstacleavoidance,
 )
 
-# Global variables for models and environment
-model = None
-agent_0 = None
-agent_1 = None
-hybrid_agent = None
-M_ext0 = None
-M_ext1 = None
-obstacle_vertices = None
-generate_sim_plot = False  # Used to generate simulation plots
-
 
 def __Init__():
-    global model, agent_0, agent_1, M_ext0, M_ext1, hybrid_agent
-
     # Load pre-trained models
     model = DQN.load("rl_policy/dqn_models/dqn_obstacleavoidance")
     agent_0 = DQN.load("rl_policy/dqn_models/dqn_obstacleavoidance_0")
     agent_1 = DQN.load("rl_policy/dqn_models/dqn_obstacleavoidance_1")
-    print("✅ Succesfully loaded pre-trained models")
+    print("✅ Successfully loaded pre-trained models")
 
     # Compute critical points (simplify if no obstacle)
     resolution = 30
@@ -64,24 +52,25 @@ def __Init__():
         verbose=False,
     )
     M_star = M_star[np.argsort(M_star[:, 0])]
-    print("✅ Succesfully computed M_star")
+    print("✅ Successfully computed M_star")
 
     # Build regions and extension regions
     M_0 = M_i(M_star, index=0)
-    M_1 = M_i(M_star, index=1) if len(M_star) > 1 else M_0  # Fallback if only one point
-    print("✅ Succesfully built M_0 and M_1")
-    X_0 = find_X_i(M_0, model)  # Minimal extension
+    M_1 = M_i(M_star, index=1) if len(M_star) > 1 else M_0
+    print("✅ Successfully built M_0 and M_1")
+    X_0 = find_X_i(M_0, model)
     X_1 = find_X_i(M_1, model)
-    print("✅ Succesfully built X_0 and X_1")
+    print("✅ Successfully built X_0 and X_1")
     M_ext0 = M_ext(M_0, X_0)
     M_ext1 = M_ext(M_1, X_1)
-    print("✅ Succesfully built M_ext0 and M_ext1")
+    print("✅ Successfully built M_ext0 and M_ext1")
 
     # Initialize hybrid agent
     hybrid_agent = HyRL_agent(agent_0, agent_1, M_ext0, M_ext1, q_init=0)
-    print("✅ Succesfully initialized hybrid agent")
+    print("✅ Successfully initialized hybrid agent")
 
     # Simulate the hybrid agent compared to the original agent
+    generate_sim_plot=False
     if generate_sim_plot:
         print("✅ Starting simulation")
         starting_conditions = [
@@ -93,25 +82,26 @@ def __Init__():
         ]
         for q in range(2):
             for state_init in starting_conditions:
-                hybrid_agent = HyRL_agent(agent_0, agent_1, M_ext0, M_ext1, q_init=q)
+                hybrid_agent_sim = HyRL_agent(agent_0, agent_1, M_ext0, M_ext1, q_init=q)
                 simulate_obstacleavoidance(
-                    hybrid_agent, model, state_init, figure_number=3 + q
+                    hybrid_agent_sim, model, state_init, figure_number=3 + q
                 )
             save_name = "OA_HyRLDQN_Sim_q" + str(q) + ".png"
             plt.savefig(save_name, format="png")
-        print("✅ saved png file")
-
+        print("✅ Saved png file")
+    return hybrid_agent
 
 class DroneService(drone_grpc.DroneServiceBase):
-    async def GetDirection(self, stream):
-        global hybrid_agent, obstacle_centroid, obstacle_radius, goal_position, M_ext0, M_ext1
+    def __init__(self, hybrid_agent):
+        self.hybrid_agent = hybrid_agent
 
+    async def GetDirection(self, stream):
         request: drone_pb2.DirectionRequest = await stream.recv_message()
         print(f"Received drone state: {request}")
 
         state = np.array([request.drone_state.x, request.drone_state.y])
         obs = state_to_observation_OA(state)
-        action_array, _ = hybrid_agent.predict(obs)
+        action_array, _ = self.hybrid_agent.predict(obs)
         if isinstance(action_array, np.ndarray):
             action = float(action_array.item())
         else:
@@ -135,11 +125,11 @@ class DroneService(drone_grpc.DroneServiceBase):
 
 
 async def main():
-    # Initialize models and hybrid agent at startup
+    # Initialize the hybrid agent at startup
     print("Initializing RL models...")
-    __Init__()
+    hybrid_agent = __Init__()
 
-    server = Server([DroneService()])
+    server = Server([DroneService(hybrid_agent)])
     await server.start("127.0.0.1", 50051)
     print("gRPC server running on 127.0.0.1:50051")
 
@@ -154,7 +144,7 @@ async def main():
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, shutdown)
 
-    # Wait for Ctrl+c shutdown signal
+    # Wait for Ctrl+C shutdown signal
     await stop.wait()
     server.close()
     await server.wait_closed()
