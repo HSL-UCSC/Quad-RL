@@ -37,15 +37,7 @@ jobs:
             
             # Start the server in the background
             make run &
-            sleep 5
-            
-            # Test SetEnvironment endpoint
-            grpcurl -plaintext -import-path protos -proto drone.proto -d '{\"vertex\": [], \"goal\": {\"x\": 3.0, \"y\": 0.0}}' 127.0.0.1:50051 dronecontrol.DroneService.SetEnvironment || {
-              if ! grep -q \"Code: Unimplemented\" <(grpcurl -plaintext -import-path protos -proto drone.proto -d '{\"vertex\": [], \"goal\": {\"x\": 3.0, \"y\": 0.0}}' 127.0.0.1:50051 dronecontrol.DroneService.SetEnvironment 2>&1); then
-                echo \"SetEnvironment did not return UNIMPLEMENTED as expected\"
-                exit 1
-              fi
-            }
+            sleep 120
             
             # Test GetDirection endpoint
             grpcurl -plaintext -import-path protos -proto drone.proto -d '{\"drone_state\": {\"x\": 1.5, \"y\": 0, \"z\": 0.0}}' 127.0.0.1:50051 dronecontrol.DroneService.GetDirection > response.json

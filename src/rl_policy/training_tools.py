@@ -308,8 +308,8 @@ class HyRL_agent:
 
     def predict(self, obs):
         state = obs[:2]
-        dist_obst = np.sqrt((state[0] - 1.5)**2 + (state[1] - 0)**2) - 0.75
-        
+        dist_obst = np.sqrt((state[0] - 1.5) ** 2 + (state[1] - 0) ** 2) - 0.75
+
         # Lock q after passing obstacle (x > 2.25)
         if state[0] > 2.25 and not self.locked:
             self.locked = True
@@ -337,8 +337,11 @@ class HyRL_agent:
             active_agent = self.agent_0 if self.q == 0 else self.agent_1
 
         action, _ = active_agent.predict(obs, deterministic=True)
-        print(f"State: {state}, Region: {'M_ext0' if self.q == 0 else 'M_ext1'}, Action: {action}, Locked: {self.locked}")
+        print(
+            f"State: {state}, Region: {'M_ext0' if self.q == 0 else 'M_ext1'}, Action: {action}, Locked: {self.locked}"
+        )
         return action, self.q
+
 
 def simulate_obstacleavoidance(
     hybrid_agent,
@@ -393,7 +396,7 @@ def simulate_obstacleavoidance(
             switches.append(switch * states_hyb[-1])
 
         sign *= -1
-        
+
     plt.figure(figure_number)
     plt.plot(
         np.array(states_hyb)[:, 0], np.array(states_hyb)[:, 1], "blue", linewidth=3

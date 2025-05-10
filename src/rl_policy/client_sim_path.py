@@ -35,7 +35,6 @@ async def get_direction(channel, x, y, z=0.0):
 
 
 def update_state(state, direction, noise, prev_states, window=5):
-    """Update state with enhanced smoothing, obstacle avoidance, and goal bias."""
     config = DIRECTION_CONFIG[direction]
     angle_rad = np.deg2rad(config["angle"])
     dx = np.cos(angle_rad) * STEP_SIZE
@@ -163,12 +162,12 @@ def plot_trajectories(all_states):
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
     ax.set_title(
-        "Smoothed Trajectory Simulation with Enhanced Avoidance and Goal Seeking"
+        "Trajectory Simulation"
     )
     ax.grid(True)
     ax.legend(loc="upper right")
 
-    plt.savefig("trajectory_simulation_goal_enhanced.png")
+    plt.savefig("trajectory_simulation.png")
     plt.show()
 
 

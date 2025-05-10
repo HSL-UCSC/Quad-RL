@@ -1,0 +1,8 @@
+reformatted /home/runner/work/Quad-RL/Quad-RL/src/rl_policy/drone_grpc.py
+reformatted /home/runner/work/Quad-RL/Quad-RL/src/rl_policy/drone_pb2.py
+reformatted /home/runner/work/Quad-RL/Quad-RL/src/rl_policy/client_sim.py
+reformatted /home/runner/work/Quad-RL/Quad-RL/src/rl_policy/server.py
+reformatted /home/runner/work/Quad-RL/Quad-RL/src/rl_policy/training_tools.py
+
+All done! ✨ 🍰 ✨
+5 files reformatted, 5 files left unchanged.
