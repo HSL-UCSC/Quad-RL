@@ -6,8 +6,11 @@ from grpclib.server import Server
 from grpclib.exceptions import GRPCError
 from grpclib.const import Status
 from stable_baselines3 import DQN
-from . import drone_pb2
-from . import drone_grpc
+
+# from . import drone_pb2
+# from . import drone_grpc
+from hyrl_server import drone_grpc
+from hyrl_server import drone_pb2
 from .training_env import ObstacleAvoidance
 from .training_tools import (
     find_critical_points,
@@ -19,9 +22,16 @@ from .training_tools import (
     HyRL_agent,
     simulate_obstacleavoidance,
 )
+from dataclasses import dataclass
 
 
-def __Init__():
+@dataclass
+class ObstacleAvoidanceModels:
+    hybrid: HyRL_agent
+    standard: DQN
+
+
+def initialize_hybrid_models():
     # Load pre-trained models
     model = DQN.load("rl_policy/dqn_models/dqn_obstacleavoidance")
     agent_0 = DQN.load("rl_policy/dqn_models/dqn_obstacleavoidance_0")
@@ -70,7 +80,7 @@ def __Init__():
     print("✅ Successfully initialized hybrid agent")
 
     # Simulate the hybrid agent compared to the original agent
-    generate_sim_plot=False
+    generate_sim_plot = False
     if generate_sim_plot:
         print("✅ Starting simulation")
         starting_conditions = [
@@ -82,18 +92,22 @@ def __Init__():
         ]
         for q in range(2):
             for state_init in starting_conditions:
-                hybrid_agent_sim = HyRL_agent(agent_0, agent_1, M_ext0, M_ext1, q_init=q)
+                hybrid_agent_sim = HyRL_agent(
+                    agent_0, agent_1, M_ext0, M_ext1, q_init=q
+                )
                 simulate_obstacleavoidance(
                     hybrid_agent_sim, model, state_init, figure_number=3 + q
                 )
             save_name = "OA_HyRLDQN_Sim_q" + str(q) + ".png"
             plt.savefig(save_name, format="png")
         print("✅ Saved png file")
-    return hybrid_agent
+    return ObstacleAvoidanceModels(hybrid=hybrid_agent, standard=model)
+
 
 class DroneService(drone_grpc.DroneServiceBase):
-    def __init__(self, hybrid_agent):
-        self.hybrid_agent = hybrid_agent
+    def __init__(self, models: ObstacleAvoidanceModels):
+        self.hybrid_agent = models.hybrid
+        self.agent = models.standard
 
     async def GetDirection(self, stream):
         request: drone_pb2.DirectionRequest = await stream.recv_message()
@@ -123,11 +137,39 @@ class DroneService(drone_grpc.DroneServiceBase):
         print(f"Response direction: {heading.direction}")
         await stream.send_message(response)
 
+    async def GetTrajectory(self, stream):
+        request: drone_pb2.TrajectoryRequest = await stream.recv_message()
+        print(f"Received trajectory request: {request}")
+
+        state = np.array([request.drone_state.x, request.drone_state.y])
+        obs = state_to_observation_OA(state)
+        action_array, _ = self.hybrid_agent.predict(obs)
+        if isinstance(action_array, np.ndarray):
+            action = float(action_array.item())
+        else:
+            action = float(action_array)
+
+        direction_map = {
+            0: drone_pb2.STRAIGHT,  # 1
+            1: drone_pb2.LEFT,  # 2
+            2: drone_pb2.HARD_LEFT,  # 3
+            3: drone_pb2.RIGHT,  # 4
+            4: drone_pb2.HARD_RIGHT,  # 5
+        }
+        direction = direction_map.get(action, drone_pb2.STRAIGHT)
+
+        # Send response
+        heading = drone_pb2.DiscreteHeading()
+        heading.direction = direction
+        response = drone_pb2.DirectionResponse(discrete_heading=heading)
+        print(f"Response direction: {heading.direction}")
+        await stream.send_message(response)
+
 
 async def main():
     # Initialize the hybrid agent at startup
     print("Initializing RL models...")
-    hybrid_agent = __Init__()
+    hybrid_agent = initialize_hybrid_models()
 
     server = Server([DroneService(hybrid_agent)])
     await server.start("127.0.0.1", 50051)

@@ -1,11 +1,18 @@
 .PHONY: protos
 
+
+PROTO_DIR = ./protos
+PROTO_FILES = $(wildcard $(PROTO_DIR)/*.proto)
+
+# Output directories
+
 # Path to your .proto file(s)
 PROTO_DIR = ./protos
 PROTO_FILES = $(wildcard $(PROTO_DIR)/*.proto)
 
 # Output directories
-OUT_DIR = ./src/rl_policy
+OUT_DIR = ./src/hyrl_server/
+# OUT_DIR = ./src/rl_policy
 PYTHON_OUT = $(OUT_DIR)
 GRPCLIB_OUT = $(OUT_DIR)
 BETTERPROTO_OUT = $(OUT_DIR)

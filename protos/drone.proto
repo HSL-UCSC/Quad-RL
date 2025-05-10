@@ -1,15 +1,12 @@
 syntax = "proto3";
 
-package dronecontrol;
+package hyrl;
 
-service DroneService {
+service ObstacleAvoidanceService {
   rpc GetDirection(DirectionRequest) returns (DirectionResponse);
+  rpc GetTrajectory(TrajectoryRequest) returns (TrajectoryResponse);
 }
 
-// DEFINE DIRECTION REQUEST
-message DirectionRequest {
-  DroneState drone_state = 1;
-}
 // define drone state
 message DroneState {
   float x = 1;
@@ -17,6 +14,27 @@ message DroneState {
   float z = 3;
 }
 
+message TrajectoryRequest{
+  DroneState current_state = 1;
+  DroneState target_state = 2;
+  uint32 num_waypoints = 3; 
+  uint32 duration_s = 4; 
+}
+
+
+message TrajectoryResponse {
+  repeated DroneState trajectory = 1;
+}
+
+// DEFINE DIRECTION REQUEST
+message DirectionRequest {
+  enum ModelType {
+    STANDARD = 0;
+    HYBRID = 1;
+  }
+  DroneState drone_state = 1;
+  ModelType model_type = 2;
+}
 
 // DEFINE DIRECTION RESPONSE
 message DirectionResponse {

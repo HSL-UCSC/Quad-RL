@@ -12,29 +12,45 @@ if typing.TYPE_CHECKING:
 import drone_pb2
 
 
-class DroneServiceBase(abc.ABC):
+class ObstacleAvoidanceServiceBase(abc.ABC):
 
     @abc.abstractmethod
     async def GetDirection(self, stream: 'grpclib.server.Stream[drone_pb2.DirectionRequest, drone_pb2.DirectionResponse]') -> None:
         pass
 
+    @abc.abstractmethod
+    async def GetTrajectory(self, stream: 'grpclib.server.Stream[drone_pb2.TrajectoryRequest, drone_pb2.TrajectoryResponse]') -> None:
+        pass
+
     def __mapping__(self) -> typing.Dict[str, grpclib.const.Handler]:
         return {
-            '/dronecontrol.DroneService/GetDirection': grpclib.const.Handler(
+            '/hyrl.ObstacleAvoidanceService/GetDirection': grpclib.const.Handler(
                 self.GetDirection,
                 grpclib.const.Cardinality.UNARY_UNARY,
                 drone_pb2.DirectionRequest,
                 drone_pb2.DirectionResponse,
             ),
+            '/hyrl.ObstacleAvoidanceService/GetTrajectory': grpclib.const.Handler(
+                self.GetTrajectory,
+                grpclib.const.Cardinality.UNARY_UNARY,
+                drone_pb2.TrajectoryRequest,
+                drone_pb2.TrajectoryResponse,
+            ),
         }
 
 
-class DroneServiceStub:
+class ObstacleAvoidanceServiceStub:
 
     def __init__(self, channel: grpclib.client.Channel) -> None:
         self.GetDirection = grpclib.client.UnaryUnaryMethod(
             channel,
-            '/dronecontrol.DroneService/GetDirection',
+            '/hyrl.ObstacleAvoidanceService/GetDirection',
             drone_pb2.DirectionRequest,
             drone_pb2.DirectionResponse,
+        )
+        self.GetTrajectory = grpclib.client.UnaryUnaryMethod(
+            channel,
+            '/hyrl.ObstacleAvoidanceService/GetTrajectory',
+            drone_pb2.TrajectoryRequest,
+            drone_pb2.TrajectoryResponse,
         )
