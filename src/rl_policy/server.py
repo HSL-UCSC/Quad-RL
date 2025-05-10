@@ -7,12 +7,11 @@ from grpclib.exceptions import GRPCError
 from grpclib.const import Status
 from stable_baselines3 import DQN
 
-# from . import drone_pb2
-# from . import drone_grpc
-from hyrl_server import drone_grpc
-from hyrl_server import drone_pb2
-from .training_env import ObstacleAvoidance
-from .training_tools import (
+from hyrl_api import drone_grpc
+from hyrl_api import drone_pb2
+from hyrl_api import hyrl
+from rl_policy.training_env import ObstacleAvoidance
+from rl_policy.training_tools import (
     find_critical_points,
     state_to_observation_OA,
     get_state_from_env_OA,
@@ -23,6 +22,9 @@ from .training_tools import (
     simulate_obstacleavoidance,
 )
 from dataclasses import dataclass
+from pathlib import Path
+from importlib.resources import path
+import importlib.resources as pkg_resources
 
 
 @dataclass
@@ -33,9 +35,23 @@ class ObstacleAvoidanceModels:
 
 def initialize_hybrid_models():
     # Load pre-trained models
-    model = DQN.load("rl_policy/dqn_models/dqn_obstacleavoidance")
-    agent_0 = DQN.load("rl_policy/dqn_models/dqn_obstacleavoidance_0")
-    agent_1 = DQN.load("rl_policy/dqn_models/dqn_obstacleavoidance_1")
+    with pkg_resources.path("dqn_models", "dqn_obstacleavoidance") as p:
+        print(p)
+    with path("dqn_models", "dqn_obstacleavoidance") as model_dir:
+        model_path = Path(model_dir)
+        print(f"Loading main model from {model_path}")
+        model = DQN.load(str(model_path))
+
+    with path("dqn_models", "dqn_obstacleavoidance_0") as a0_dir:
+        a0_path = Path(a0_dir)
+        print(f"Loading agent_0 from {a0_path}")
+        agent_0 = DQN.load(str(a0_path))
+
+    with path("dqn_models", "dqn_obstacleavoidance_1") as a1_dir:
+        a1_path = Path(a1_dir)
+        print(f"Loading agent_1 from {a1_path}")
+        agent_1 = DQN.load(str(a1_path))
+
     print("✅ Successfully loaded pre-trained models")
 
     # Compute critical points (simplify if no obstacle)
@@ -104,65 +120,59 @@ def initialize_hybrid_models():
     return ObstacleAvoidanceModels(hybrid=hybrid_agent, standard=model)
 
 
-class DroneService(drone_grpc.DroneServiceBase):
+class DroneService(drone_grpc.ObstacleAvoidanceServiceBase):
+
+    direction_map = {
+        0: hyrl.HeadingDirection.STRAIGHT,  # 1
+        1: hyrl.HeadingDirection.LEFT,  # 2
+        2: hyrl.HeadingDirection.HARD_LEFT,  # 3
+        3: hyrl.HeadingDirection.RIGHT,  # 4
+        4: hyrl.HeadingDirection.HARD_RIGHT,  # 5
+    }
+
     def __init__(self, models: ObstacleAvoidanceModels):
         self.hybrid_agent = models.hybrid
         self.agent = models.standard
 
     async def GetDirection(self, stream):
-        request: drone_pb2.DirectionRequest = await stream.recv_message()
+        request: hyrl.DirectionRequest = await stream.recv_message()
         print(f"Received drone state: {request}")
 
         state = np.array([request.drone_state.x, request.drone_state.y])
         obs = state_to_observation_OA(state)
         action_array, _ = self.hybrid_agent.predict(obs)
         if isinstance(action_array, np.ndarray):
-            action = float(action_array.item())
+            action = int(action_array.item())
         else:
-            action = float(action_array)
-
-        direction_map = {
-            0: drone_pb2.STRAIGHT,  # 1
-            1: drone_pb2.LEFT,  # 2
-            2: drone_pb2.HARD_LEFT,  # 3
-            3: drone_pb2.RIGHT,  # 4
-            4: drone_pb2.HARD_RIGHT,  # 5
-        }
-        direction = direction_map.get(action, drone_pb2.STRAIGHT)
+            action = int(action_array)
 
         # Send response
-        heading = drone_pb2.DiscreteHeading()
-        heading.direction = direction
-        response = drone_pb2.DirectionResponse(discrete_heading=heading)
-        print(f"Response direction: {heading.direction}")
+        response = hyrl.DirectionResponse(
+            discrete_heading=hyrl.DiscreteHeading(
+                direction=self.direction_map.get(action, hyrl.HeadingDirection.STRAIGHT)
+            )
+        )
+        print(f"Response direction: {response.discrete_heading}")
         await stream.send_message(response)
 
     async def GetTrajectory(self, stream):
-        request: drone_pb2.TrajectoryRequest = await stream.recv_message()
+        request: hyrl.TrajectoryRequest = await stream.recv_message()
         print(f"Received trajectory request: {request}")
 
         state = np.array([request.drone_state.x, request.drone_state.y])
-        obs = state_to_observation_OA(state)
-        action_array, _ = self.hybrid_agent.predict(obs)
-        if isinstance(action_array, np.ndarray):
-            action = float(action_array.item())
-        else:
-            action = float(action_array)
-
-        direction_map = {
-            0: drone_pb2.STRAIGHT,  # 1
-            1: drone_pb2.LEFT,  # 2
-            2: drone_pb2.HARD_LEFT,  # 3
-            3: drone_pb2.RIGHT,  # 4
-            4: drone_pb2.HARD_RIGHT,  # 5
-        }
-        direction = direction_map.get(action, drone_pb2.STRAIGHT)
-
+        # TODO: implement get trajectory loop here
+        # obs = state_to_observation_OA(state)
+        # action_array, _ = self.hybrid_agent.predict(obs)
+        # if isinstance(action_array, np.ndarray):
+        #     action = int(action_array.item())
+        # else:
+        #     action = int(action_array)
+        #
         # Send response
-        heading = drone_pb2.DiscreteHeading()
-        heading.direction = direction
-        response = drone_pb2.DirectionResponse(discrete_heading=heading)
-        print(f"Response direction: {heading.direction}")
+        response = hyrl.TrajectoryResponse(
+            trjectory=[hyrl.DroneState(x=0.0, y=0.0, z=0.0)],
+        )
+        print(f"Response direction: {response.discrete_heading}")
         await stream.send_message(response)
 
 

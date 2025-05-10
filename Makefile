@@ -10,30 +10,33 @@ PROTO_FILES = $(wildcard $(PROTO_DIR)/*.proto)
 PROTO_DIR = ./protos
 PROTO_FILES = $(wildcard $(PROTO_DIR)/*.proto)
 
+PYTHONPATH=$PWD:$PYTHONPATH python -m rl_policy.server
 # Output directories
-OUT_DIR = ./src/hyrl_server/
+OUT_DIR = ./src
 # OUT_DIR = ./src/rl_policy
 PYTHON_OUT = $(OUT_DIR)
 GRPCLIB_OUT = $(OUT_DIR)
-BETTERPROTO_OUT = $(OUT_DIR)
+BETTERPROTO_OUT = $(OUT_DIR)/hyrl_api
+
 
 run:
-	cd src && PYTHONPATH=$$PWD/rl_policy:$$PYTHONPATH python -m rl_policy.server
+	python -m rl_policy.server
 
 test:
-	cd src && PYTHONPATH=$$PWD/rl_policy:$$PYTHONPATH python -m rl_policy.client_sim
+	python -m rl_policy.client_sim
 
 test_path:
-	cd src && PYTHONPATH=$$PWD/rl_policy:$$PYTHONPATH python -m rl_policy.client_sim_path
+	python -m rl_policy.client_sim_path
 
 # Command to generate all Python files from .proto
 protos:
+	mkdir -p $(OUT_DIR)/hyrl_api
 	python -m grpc_tools.protoc \
-		-I$(PROTO_DIR) \
-		--python_out=$(PYTHON_OUT) \
-		--grpclib_python_out=$(GRPCLIB_OUT) \
+	  -I$(PROTO_DIR) \
+	  --python_out=$(OUT_DIR) \
+	  --grpclib_python_out=$(OUT_DIR) \
 		--python_betterproto_out=$(BETTERPROTO_OUT) \
-		$(PROTO_FILES)
+	  $(PROTO_DIR)/hyrl_api/drone.proto
 
 # Clean generated files (optional)
 clean:
