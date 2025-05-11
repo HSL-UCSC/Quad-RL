@@ -3,12 +3,9 @@ import signal
 import numpy as np
 import matplotlib.pyplot as plt
 from grpclib.server import Server
-from grpclib.exceptions import GRPCError
-from grpclib.const import Status
 from stable_baselines3 import DQN
 
-from hyrl_api import drone_grpc
-from hyrl_api import drone_pb2
+from hyrl_api import obstacle_avoidance_grpc
 from hyrl_api import hyrl
 from rl_policy.training_env import ObstacleAvoidance
 from rl_policy.training_tools import (
@@ -35,8 +32,8 @@ class ObstacleAvoidanceModels:
 
 def initialize_hybrid_models():
     # Load pre-trained models
-    with pkg_resources.path("dqn_models", "dqn_obstacleavoidance") as p:
-        print(p)
+    # with pkg_resources.path("dqn_models", "dqn_obstacleavoidance") as p:
+    #     print(p)
     with path("dqn_models", "dqn_obstacleavoidance") as model_dir:
         model_path = Path(model_dir)
         print(f"Loading main model from {model_path}")
@@ -120,7 +117,7 @@ def initialize_hybrid_models():
     return ObstacleAvoidanceModels(hybrid=hybrid_agent, standard=model)
 
 
-class DroneService(drone_grpc.ObstacleAvoidanceServiceBase):
+class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
 
     direction_map = {
         0: hyrl.HeadingDirection.STRAIGHT,  # 1
