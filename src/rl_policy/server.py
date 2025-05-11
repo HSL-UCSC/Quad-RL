@@ -6,7 +6,7 @@ from grpclib.server import Server
 from stable_baselines3 import DQN
 
 from hyrl_api import obstacle_avoidance_grpc
-from hyrl_api import hyrl
+from hyrl_api import obstacle_avoidance_pb2 as oa_proto
 from rl_policy.training_env import ObstacleAvoidance
 from rl_policy.training_tools import (
     find_critical_points,
@@ -120,11 +120,11 @@ def initialize_hybrid_models():
 class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
 
     direction_map = {
-        0: hyrl.HeadingDirection.STRAIGHT,  # 1
-        1: hyrl.HeadingDirection.LEFT,  # 2
-        2: hyrl.HeadingDirection.HARD_LEFT,  # 3
-        3: hyrl.HeadingDirection.RIGHT,  # 4
-        4: hyrl.HeadingDirection.HARD_RIGHT,  # 5
+        0: oa_proto.HeadingDirection.STRAIGHT,  # 1
+        1: oa_proto.HeadingDirection.LEFT,  # 2
+        2: oa_proto.HeadingDirection.HARD_LEFT,  # 3
+        3: oa_proto.HeadingDirection.RIGHT,  # 4
+        4: oa_proto.HeadingDirection.HARD_RIGHT,  # 5
     }
 
     def __init__(self, models: ObstacleAvoidanceModels):
@@ -132,7 +132,7 @@ class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
         self.agent = models.standard
 
     async def GetDirection(self, stream):
-        request: hyrl.DirectionRequest = await stream.recv_message()
+        request: oa_proto.DirectionRequest = await stream.recv_message()
         print(f"Received drone state: {request}")
 
         state = np.array([request.drone_state.x, request.drone_state.y])
@@ -144,16 +144,18 @@ class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
             action = int(action_array)
 
         # Send response
-        response = hyrl.DirectionResponse(
-            discrete_heading=hyrl.DiscreteHeading(
-                direction=self.direction_map.get(action, hyrl.HeadingDirection.STRAIGHT)
+        response = oa_proto.DirectionResponse(
+            discrete_heading=oa_proto.DiscreteHeading(
+                direction=self.direction_map.get(
+                    action, oa_proto.HeadingDirection.STRAIGHT
+                )
             )
         )
         print(f"Response direction: {response.discrete_heading}")
         await stream.send_message(response)
 
     async def GetTrajectory(self, stream):
-        request: hyrl.TrajectoryRequest = await stream.recv_message()
+        request: oa_proto.TrajectoryRequest = await stream.recv_message()
         print(f"Received trajectory request: {request}")
 
         state = np.array([request.drone_state.x, request.drone_state.y])
@@ -166,8 +168,8 @@ class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
         #     action = int(action_array)
         #
         # Send response
-        response = hyrl.TrajectoryResponse(
-            trjectory=[hyrl.DroneState(x=0.0, y=0.0, z=0.0)],
+        response = oa_proto.TrajectoryResponse(
+            trjectory=[oa_proto.DroneState(x=0.0, y=0.0, z=0.0)],
         )
         print(f"Response direction: {response.discrete_heading}")
         await stream.send_message(response)

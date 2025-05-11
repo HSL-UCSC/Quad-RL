@@ -44,7 +44,7 @@
               # Install dependencies from pyproject.toml if it exists
               if [ -f "pyproject.toml" ]; then
                 echo "📦 Installing dependencies from pyproject.toml..."
-                uv pip install .
+                uv pip install -e .
               else
                 echo "⚠️ No pyproject.toml found, skipping dependency installation"
               fi
