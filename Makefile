@@ -36,7 +36,7 @@ protos:
 	  --python_out=$(OUT_DIR) \
 	  --grpclib_python_out=$(OUT_DIR) \
 		--python_betterproto_out=$(BETTERPROTO_OUT) \
-	  $(PROTO_DIR)/hyrl_api/drone.proto
+	  $(PROTO_DIR)/hyrl_api/obstacle_avoidance.proto
 
 # Clean generated files (optional)
 clean:
