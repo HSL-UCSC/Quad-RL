@@ -40,8 +40,9 @@ jobs:
             grpcurl -plaintext \
               -import-path protos/hyrl_api \
               -proto obstacle_avoidance.proto \
-              -d "{\"drone_state\":{\"x\":1.5,\"y\":0,\"z\":0}}\" \
-              127.0.0.1:50051 hyrl.ObstacleAvoidanceService.GetDirection \
+              -d '{"drone_state":{"x":1.5,"y":0,"z":0.0}}' \
+              127.0.0.1:50051 \
+              hyrl.ObstacleAvoidanceService.GetDirection \
               > response.json
             grep -q "\"direction\":" response.json
             kill $SERVER_PID
