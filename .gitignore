@@ -11,3 +11,6 @@ wheels/
 
 # Mac
 .DS_Store
+
+# Fmt
+black_output.txt
