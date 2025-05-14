@@ -6,15 +6,14 @@
   outputs = { self, nixpkgs }:
     let
       supportedSystems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
-      forEachSupportedSystem = f: nixpkgs.lib.genAttrs supportedSystems (system: f {
-        pkgs = import nixpkgs { inherit system; };
-      });
-    in
-    {
+      forEachSupportedSystem = f:
+        nixpkgs.lib.genAttrs supportedSystems
+        (system: f { pkgs = import nixpkgs { inherit system; }; });
+    in {
       devShells = forEachSupportedSystem ({ pkgs }: {
         # Default shell for just running the code (minimal setup)
         default = pkgs.mkShell {
-          packages = with pkgs; [ 
+          packages = with pkgs; [
             python313
             python313Packages.uv
             grpcurl
@@ -26,10 +25,10 @@
 
             # Add GCC library path to LD_LIBRARY_PATH
             export LD_LIBRARY_PATH=${pkgs.gcc.cc.lib}/lib:$LD_LIBRARY_PATH
-            
+
             # Add src to PATH
             export PYTHONPATH=$PWD/src:$PYTHONPATH
-            
+
             # Create venv if it doesn't exist
             if [ ! -d ".venv" ]; then
               echo "📦 No .venv found, creating with uv..."
@@ -56,7 +55,7 @@
 
         # Dev shell geared toward development, leaving your system's Neovim in place
         dev = pkgs.mkShell {
-          packages = with pkgs; [ 
+          packages = with pkgs; [
             python313
             python313Packages.uv
             zsh
@@ -71,11 +70,11 @@
 
             # Add GCC library path to LD_LIBRARY_PATH
             export LD_LIBRARY_PATH=${pkgs.gcc.cc.lib}/lib:$LD_LIBRARY_PATH
-            
+
             # Add src to PATH
             export PYTHONPATH=$PWD/src:$PYTHONPATH
             uv sync --extra dev
-            
+
             # Create venv if it doesn't exist
             if [ ! -d ".venv" ]; then
               echo "📦 No .venv found, creating with uv..."
@@ -106,7 +105,7 @@
 
         # Full development environment with neovim included
         full = pkgs.mkShell {
-          packages = with pkgs; [ 
+          packages = with pkgs; [
             python313
             python313Packages.uv
             zsh
@@ -122,11 +121,11 @@
 
             # Add GCC library path to LD_LIBRARY_PATH
             export LD_LIBRARY_PATH=${pkgs.gcc.cc.lib}/lib:$LD_LIBRARY_PATH
-            
+
             # Add src to PATH
             export PYTHONPATH=$PWD/src:$PYTHONPATH
             uv sync --extra dev
-            
+
             # Create venv if it doesn't exist
             if [ ! -d ".venv" ]; then
               echo "📦 No .venv found, creating with uv..."
@@ -154,7 +153,7 @@
             fi
           '';
         };
-        
+
         # Alias to make run the same as default
         run = self.devShells.${pkgs.system}.default;
       });
