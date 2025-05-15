@@ -8,3 +8,12 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Mac
+.DS_Store
+
+# Fmt
+black_output.txt
+
+# Testing
+response.json
