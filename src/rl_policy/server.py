@@ -158,7 +158,7 @@ class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
         request: oa_proto.TrajectoryRequest = await stream.recv_message()
         print(f"Received trajectory request: {request}")
 
-        # todo: implement get trajectory loop here
+        # TODO: implement get trajectory loop here
         # obs = state_to_observation_OA(state)
         # action_array, _ = self.hybrid_agent.predict(obs)
         # if isinstance(action_array, np.ndarray):

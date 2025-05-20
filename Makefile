@@ -19,11 +19,14 @@ BETTERPROTO_OUT = $(OUT_DIR)/hyrl_api
 run:
 	python -m rl_policy.server
 
-test:
+test_getDirection1:
 	python -m rl_policy.client_sim
 
-test_path:
-	python -m rl_policy.client_sim_path
+test_getDirection2:
+	python -m rl_policy.getDirectionSim
+
+test_getTrajectory:
+	python -m rl_policy.getTrajectorySim
 
 # Command to generate all Python files from .proto
 protos:
