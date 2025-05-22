@@ -19,11 +19,11 @@ BETTERPROTO_OUT = $(OUT_DIR)/hyrl_api
 run:
 	python -m rl_policy.server
 
-test_getDirection1:
-	python -m rl_policy.client_sim
+test_getDirectionField:
+	python -m rl_policy.getDirectionField
 
-test_getDirection2:
-	python -m rl_policy.getDirectionSim
+test_getDirectionPath:
+	python -m rl_policy.getDirectionPath
 
 test_getTrajectory:
 	python -m rl_policy.getTrajectorySim
