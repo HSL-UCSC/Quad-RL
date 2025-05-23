@@ -3,7 +3,8 @@ name = "rl-policy"
 version = "0.1.0"
 description = "Reinforcement learning policy server for drone navigation"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.8,<3.11"
+
 dependencies = [
   "betterproto>=1.2.5",
   "grpcio-tools>=1.71.0",
@@ -15,10 +16,13 @@ dependencies = [
   "stable-baselines3>=2.0.0",
   "torch>=2.0.0",
   "matplotlib>=3.7.0",
-  "gym>=0.26.2",
+  "gym",
   "scikit-learn>=1.5.0",
   "shimmy>=0.2.1",
 ]
+
+[tool.uv.sources]
+gym = { path = "gym-0.21.0" }
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -32,4 +36,4 @@ dev = ["black>=24.8.0"]
 
 [tool.black]
 line-length = 88
-target-version = ['py313']
+target-version = ['py310']
