@@ -8,14 +8,14 @@
       supportedSystems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
       forEachSupportedSystem = f:
         nixpkgs.lib.genAttrs supportedSystems
-        (system: f { pkgs = import nixpkgs { inherit system; }; });
+        (system: f { pkgs = import nixpkgs { system = system; config.allowUnfree = true; }; });
     in {
       devShells = forEachSupportedSystem ({ pkgs }: {
         # Default shell for just running the code (minimal setup)
         default = pkgs.mkShell {
           packages = with pkgs; [
-            python313
-            python313Packages.uv
+            python310
+            python310Packages.uv
             grpcurl
             protobuf
           ];
@@ -27,6 +27,7 @@
             export LD_LIBRARY_PATH=${pkgs.gcc.cc.lib}/lib:$LD_LIBRARY_PATH
 
             # Add src to PATH
+            export PATH="${pkgs.python310}/bin:$PATH"
             export PYTHONPATH=$PWD/src:$PYTHONPATH
 
             # Create venv if it doesn't exist
@@ -56,8 +57,8 @@
         # Dev shell geared toward development, leaving your system's Neovim in place
         dev = pkgs.mkShell {
           packages = with pkgs; [
-            python313
-            python313Packages.uv
+            python310
+            python310Packages.uv
             zsh
             black
             texliveFull
@@ -73,7 +74,6 @@
 
             # Add src to PATH
             export PYTHONPATH=$PWD/src:$PYTHONPATH
-            uv sync --extra dev
 
             # Create venv if it doesn't exist
             if [ ! -d ".venv" ]; then
@@ -86,10 +86,10 @@
               source .venv/bin/activate
               echo "✅ Activated Python venv at .venv"
               python --version
-              # Install dependencies from pyproject.toml if it exists
+              # Install dependencies from pyproject.toml with dev extras
               if [ -f "pyproject.toml" ]; then
                 echo "📦 Installing dependencies from pyproject.toml..."
-                uv pip install -e .
+                uv pip install -e .[dev]
               else
                 echo "⚠️ No pyproject.toml found, skipping dependency installation"
               fi
@@ -106,8 +106,8 @@
         # Full development environment with neovim included
         full = pkgs.mkShell {
           packages = with pkgs; [
-            python313
-            python313Packages.uv
+            python310
+            python310Packages.uv
             zsh
             neovim
             black
@@ -123,8 +123,8 @@
             export LD_LIBRARY_PATH=${pkgs.gcc.cc.lib}/lib:$LD_LIBRARY_PATH
 
             # Add src to PATH
+            export PATH="${pkgs.python310}/bin:$PATH"
             export PYTHONPATH=$PWD/src:$PYTHONPATH
-            uv sync --extra dev
 
             # Create venv if it doesn't exist
             if [ ! -d ".venv" ]; then
@@ -137,10 +137,10 @@
               source .venv/bin/activate
               echo "✅ Activated Python venv at .venv"
               python --version
-              # Install dependencies from pyproject.toml if it exists
+              # Install dependencies from pyproject.toml with dev extras
               if [ -f "pyproject.toml" ]; then
                 echo "📦 Installing dependencies from pyproject.toml..."
-                uv pip install -e .
+                uv pip install -e .[dev]
               else
                 echo "⚠️ No pyproject.toml found, skipping dependency installation"
               fi
