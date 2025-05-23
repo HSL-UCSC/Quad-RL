@@ -8,30 +8,36 @@
       supportedSystems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
       forEachSupportedSystem = f:
         nixpkgs.lib.genAttrs supportedSystems
-        (system: f { pkgs = import nixpkgs { inherit system; }; });
+        (system: f { pkgs = import nixpkgs { system = system; config.allowUnfree = true; }; });
     in {
       devShells = forEachSupportedSystem ({ pkgs }: {
         # Default shell for just running the code (minimal setup)
         default = pkgs.mkShell {
           packages = with pkgs; [
-            python313
-            python313Packages.uv
+            python310
+            python310Packages.uv
             grpcurl
             protobuf
           ];
 
           shellHook = ''
+
+            export PATH="{pkgs.python310}/bin:$PATH"
+            uv python set $(which python3.10)
             echo "🔧 Setting up minimal Python environment with uv..."
 
             # Add GCC library path to LD_LIBRARY_PATH
             export LD_LIBRARY_PATH=${pkgs.gcc.cc.lib}/lib:$LD_LIBRARY_PATH
 
             # Add src to PATH
+            export PATH="{pkgs.python310}/bin:$PATH"
             export PYTHONPATH=$PWD/src:$PYTHONPATH
 
             # Create venv if it doesn't exist
             if [ ! -d ".venv" ]; then
               echo "📦 No .venv found, creating with uv..."
+              echo python --version
+
               uv venv
             fi
 
@@ -56,8 +62,8 @@
         # Dev shell geared toward development, leaving your system's Neovim in place
         dev = pkgs.mkShell {
           packages = with pkgs; [
-            python313
-            python313Packages.uv
+            python310
+            python310Packages.uv
             zsh
             black
             texliveFull
@@ -69,6 +75,7 @@
             echo "🔧 Setting up Python development environment with uv..."
 
             # Add GCC library path to LD_LIBRARY_PATH
+            uv python set $(which python3.10)
             export LD_LIBRARY_PATH=${pkgs.gcc.cc.lib}/lib:$LD_LIBRARY_PATH
 
             # Add src to PATH
@@ -106,8 +113,8 @@
         # Full development environment with neovim included
         full = pkgs.mkShell {
           packages = with pkgs; [
-            python313
-            python313Packages.uv
+            python310
+            python310Packages.uv
             zsh
             neovim
             black
@@ -117,12 +124,14 @@
           ];
 
           shellHook = ''
+            export PATH="{pkgs.python310}/bin:$PATH"
             echo "🔧 Setting up comprehensive Python development environment with uv..."
 
             # Add GCC library path to LD_LIBRARY_PATH
             export LD_LIBRARY_PATH=${pkgs.gcc.cc.lib}/lib:$LD_LIBRARY_PATH
 
             # Add src to PATH
+            export PATH="{pkgs.python310}/bin:$PATH"
             export PYTHONPATH=$PWD/src:$PYTHONPATH
             uv sync --extra dev
 
