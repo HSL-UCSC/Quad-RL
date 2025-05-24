@@ -2,8 +2,8 @@ import asyncio
 import numpy as np
 import matplotlib.pyplot as plt
 from grpclib.client import Channel
-from . import drone_pb2
-from . import drone_grpc
+from hyrl_api import obstacle_avoidance_pb2 as oa_proto
+from hyrl_api import obstacle_avoidance_grpc as oa_grpc
 import time
 
 HOST = "127.0.0.1"
@@ -16,23 +16,22 @@ STEP_SIZE = 0.05
 NOISE_MAG = 0
 
 DIRECTION_CONFIG = {
-    drone_pb2.STRAIGHT: {"angle": 0, "color": "blue", "label": "Straight"},
-    drone_pb2.LEFT: {"angle": 15, "color": "green", "label": "Left"},
-    drone_pb2.HARD_LEFT: {"angle": 30, "color": "cyan", "label": "Hard Left"},
-    drone_pb2.RIGHT: {"angle": -15, "color": "orange", "label": "Right"},
-    drone_pb2.HARD_RIGHT: {"angle": -30, "color": "red", "label": "Hard Right"},
+    oa_proto.HeadingDirection.STRAIGHT: {"angle": 0, "color": "blue", "label": "Straight"},
+    oa_proto.HeadingDirection.LEFT: {"angle": 15, "color": "green", "label": "Left"},
+    oa_proto.HeadingDirection.HARD_LEFT: {"angle": 30, "color": "cyan", "label": "Hard Left"},
+    oa_proto.HeadingDirection.RIGHT: {"angle": -15, "color": "orange", "label": "Right"},
+    oa_proto.HeadingDirection.HARD_RIGHT: {"angle": -30, "color": "red", "label": "Hard Right"},
 }
 
-
 async def get_direction(channel, x, y, z=0.0):
-    stub = drone_grpc.DroneServiceStub(channel)
-    request = drone_pb2.DirectionRequest(
-        drone_state=drone_pb2.DroneState(x=x, y=y, z=z)
+    stub = oa_grpc.ObstacleAvoidanceServiceStub(channel)
+    request = oa_proto.DirectionRequest(
+        drone_state=oa_proto.DroneState(x=x, y=y, z=z),
+        model_type=oa_proto.DirectionRequest.ModelType.HYBRID  # Use HYBRID model
     )
     start_time = time.time()
     response = await stub.GetDirection(request)
     return response.discrete_heading.direction, time.time() - start_time
-
 
 def update_state(state, direction, noise, prev_states, window=5):
     config = DIRECTION_CONFIG[direction]
@@ -67,13 +66,11 @@ def update_state(state, direction, noise, prev_states, window=5):
     proposed_state[1] = np.clip(proposed_state[1], -Y_MAX, Y_MAX)
     return proposed_state
 
-
 def is_done(state):
     x, y = state
     dist_goal = np.sqrt((x - 3.0) ** 2 + (y - 0.0) ** 2)
     dist_obst = np.sqrt((x - 1.5) ** 2 + (y - 0.0) ** 2) - OBSTACLE_RADIUS
     return dist_goal < 0.1 or x >= X_MAX or dist_obst <= 0
-
 
 async def simulate_trajectory(channel, state_init):
     state = np.array(state_init, dtype=np.float32)
@@ -93,13 +90,12 @@ async def simulate_trajectory(channel, state_init):
         )
         dist_goal = np.sqrt((state[0] - 3.0) ** 2 + (state[1] - 0.0) ** 2)
         print(
-            f"State: {state}, Direction: {drone_pb2.HeadingDirection.Name(direction)}, "
+            f"State: {state}, Direction: {oa_proto.HeadingDirection.Name(direction)}, "
             f"Dist to Obst: {dist_obst:.3f}, Dist to Goal: {dist_goal:.3f}, Time: {response_time:.4f}s"
         )
         sign *= -1
 
     return np.array(states), response_times
-
 
 async def simulate_client():
     starting_conditions = [
@@ -123,7 +119,6 @@ async def simulate_client():
         print(f"Max Sampling Rate: {1/avg_response_time:.2f} Hz")
 
         plot_trajectories(all_states)
-
 
 def plot_trajectories(all_states):
     fig, ax = plt.subplots(figsize=(12, 8))
@@ -161,15 +156,12 @@ def plot_trajectories(all_states):
     ax.set_ylim(-Y_MAX, Y_MAX)
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
-    ax.set_title(
-        "Trajectory Simulation"
-    )
+    ax.set_title("Trajectory Simulation")
     ax.grid(True)
     ax.legend(loc="upper right")
 
-    plt.savefig("trajectory_simulation.png")
+    plt.savefig("getDirectionSimulation.png")
     plt.show()
-
 
 if __name__ == "__main__":
     asyncio.run(simulate_client())

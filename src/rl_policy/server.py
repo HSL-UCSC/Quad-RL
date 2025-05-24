@@ -158,7 +158,6 @@ class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
         request: oa_proto.TrajectoryRequest = await stream.recv_message()
         print(f"Received trajectory request: {request}")
 
-        state = np.array([request.drone_state.x, request.drone_state.y])
         # TODO: implement get trajectory loop here
         # obs = state_to_observation_OA(state)
         # action_array, _ = self.hybrid_agent.predict(obs)
@@ -168,10 +167,65 @@ class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
         #     action = int(action_array)
         #
         # Send response
+
+        x_start = request.current_state.x
+        y_start = request.current_state.y
+        z_start = request.current_state.z
+        x_target = request.target_state.x
+        y_target = request.target_state.y
+        z_target = request.target_state.z
+        num_waypoints = request.num_waypoints
+        duration_s = request.duration_s
+
+        state = np.array([x_start, y_start], dtype=np.float32)
+        t_sampling = 0.05
+        steps = int(duration_s / t_sampling)
+        env = ObstacleAvoidance(state_init=state, random_init=False, steps=steps)
+        done = False
+        states = [[state[0], state[1], z_start]]
+
+        target_pos = np.array([x_target, y_target])
+        dist_threshold = 0.1
+
+        while not done:
+            obs = state_to_observation_OA(state)
+            action_array, _ = self.hybrid_agent.predict(obs)
+
+            if isinstance(action_array, np.ndarray):
+                action = int(action_array.item())
+            else:
+                action = int(action_array)
+
+            env.state = state
+            _, _, done, _ = env.step(action)
+            state = get_state_from_env_OA(env)
+            dist_to_target = np.linalg.norm(state - target_pos)
+            if dist_to_target < dist_threshold:
+                done = True
+
+            if not env.terminate: 
+                states.append([state[0], state[1], z_start])
+                print(f"Step: State=[{state[0]:.4f}, {state[1]:.4f}], Action={action}")
+                
+        if dist_to_target < dist_threshold:
+            states[-1] = [x_target, y_target, z_target]
+        else:
+            states.append[x_target, y_target, z_target]
+
+        total_states = len(states)
+        if total_states < num_waypoints:
+            states.extend([[x_target, y_target, z_target]] * (num_waypoints - total_states))
+        elif total_states > num_waypoints:
+            indices = np.linspace(0, total_states - 1, num_waypoints, dtype=int)
+            states = [states[i] for i in indices]
+
+              
         response = oa_proto.TrajectoryResponse(
-            trjectory=[oa_proto.DroneState(x=0.0, y=0.0, z=0.0)],
-        )
-        print(f"Response direction: {response.discrete_heading}")
+            trajectory = [
+                oa_proto.DroneState(x=x, y=y, z=z)
+                for x, y, z in states
+        ])
+        print(f"Generated trajectory: {[wp for wp in response.trajectory]}")
         await stream.send_message(response)
 
 

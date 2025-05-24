@@ -2,8 +2,8 @@ import asyncio
 import numpy as np
 import matplotlib.pyplot as plt
 from grpclib.client import Channel
-from . import drone_pb2
-from . import drone_grpc
+from hyrl_api import obstacle_avoidance_pb2 as oa_proto
+from hyrl_api import obstacle_avoidance_grpc as oa_grpc
 import time
 
 # Server connection details
@@ -18,25 +18,24 @@ OBSTACLE_RADIUS = 0.75
 
 # Direction angles (degrees) and colors
 DIRECTION_CONFIG = {
-    drone_pb2.STRAIGHT: {"angle": 0, "color": "blue", "label": "Straight"},
-    drone_pb2.LEFT: {"angle": 15, "color": "green", "label": "Left"},
-    drone_pb2.HARD_LEFT: {"angle": 30, "color": "cyan", "label": "Hard Left"},
-    drone_pb2.RIGHT: {"angle": -15, "color": "orange", "label": "Right"},
-    drone_pb2.HARD_RIGHT: {"angle": -30, "color": "red", "label": "Hard Right"},
+    oa_proto.HeadingDirection.STRAIGHT: {"angle": 0, "color": "blue", "label": "Straight"},
+    oa_proto.HeadingDirection.LEFT: {"angle": 15, "color": "green", "label": "Left"},
+    oa_proto.HeadingDirection.HARD_LEFT: {"angle": 30, "color": "cyan", "label": "Hard Left"},
+    oa_proto.HeadingDirection.RIGHT: {"angle": -15, "color": "orange", "label": "Right"},
+    oa_proto.HeadingDirection.HARD_RIGHT: {"angle": -30, "color": "red", "label": "Hard Right"},
 }
-
 
 async def get_direction(channel, x, y, z=0.0):
     """Query the GetDirection endpoint and return direction with response time."""
-    stub = drone_grpc.DroneServiceStub(channel)
-    request = drone_pb2.DirectionRequest(
-        drone_state=drone_pb2.DroneState(x=x, y=y, z=z)
+    stub = oa_grpc.ObstacleAvoidanceServiceStub(channel)
+    request = oa_proto.DirectionRequest(
+        drone_state=oa_proto.DroneState(x=x, y=y, z=z),
+        model_type=oa_proto.DirectionRequest.ModelType.HYBRID  # Use HYBRID model
     )
     start_time = time.time()
     response = await stub.GetDirection(request)
     end_time = time.time()
     return response.discrete_heading.direction, end_time - start_time
-
 
 async def simulate_client():
     """Test GetDirection across a grid, log results, and measure response time."""
@@ -53,7 +52,7 @@ async def simulate_client():
             directions.append(direction)
             response_times.append(response_time)
             print(
-                f"Point ({x:.2f}, {y:.2f}) -> Direction: {drone_pb2.HeadingDirection.Name(direction)}, Time: {response_time:.4f}s"
+                f"Point ({x:.2f}, {y:.2f}) -> Direction: {oa_proto.HeadingDirection.Name(direction)}, Time: {response_time:.4f}s"
             )
 
         # Calculate and print average response time
@@ -63,7 +62,6 @@ async def simulate_client():
 
         # Visualize results
         plot_directions(points, directions)
-
 
 def plot_directions(points, directions):
     """Plot points with colored direction arrows, obstacle, and legend."""
@@ -116,7 +114,6 @@ def plot_directions(points, directions):
     # Save and show plot
     plt.savefig("direction_simulation_colored.png")
     plt.show()
-
 
 if __name__ == "__main__":
     asyncio.run(simulate_client())
