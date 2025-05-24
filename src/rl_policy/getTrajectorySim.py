@@ -41,8 +41,8 @@ async def simulate_client(num_waypoints, duration_s):
         np.array([0.0, 0.0], dtype=np.float32),
         np.array([0.0, 0.055], dtype=np.float32),
         np.array([0.0, -0.055], dtype=np.float32),
-        np.array([0.0, 0.15], dtype=np.float32),
-        np.array([0.0, -0.4], dtype=np.float32),
+        np.array([0.0, 0.24], dtype=np.float32),
+        np.array([0.0, -0.3], dtype=np.float32),
     ]
 
     async with Channel(HOST, PORT) as channel:
