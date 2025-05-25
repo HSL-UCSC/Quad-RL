@@ -8,6 +8,11 @@ import betterproto
 import grpclib
 
 
+class ModelType(betterproto.Enum):
+    STANDARD = 0
+    HYBRID = 1
+
+
 class HeadingDirection(betterproto.Enum):
     RESERVED = 0
     STRAIGHT = 1
@@ -15,11 +20,6 @@ class HeadingDirection(betterproto.Enum):
     HARD_LEFT = 3
     RIGHT = 4
     HARD_RIGHT = 5
-
-
-class DirectionRequestModelType(betterproto.Enum):
-    STANDARD = 0
-    HYBRID = 1
 
 
 @dataclass
@@ -33,10 +33,12 @@ class DroneState(betterproto.Message):
 
 @dataclass
 class TrajectoryRequest(betterproto.Message):
-    current_state: "DroneState" = betterproto.message_field(1)
+    state: "DroneState" = betterproto.message_field(1)
     target_state: "DroneState" = betterproto.message_field(2)
-    num_waypoints: int = betterproto.uint32_field(3)
-    duration_s: int = betterproto.uint32_field(4)
+    duration_s: int = betterproto.uint32_field(3)
+    sampling_time: float = betterproto.float_field(4)
+    model_type: "ModelType" = betterproto.enum_field(5)
+    num_waypoints: int = betterproto.int32_field(6)
 
 
 @dataclass
@@ -48,8 +50,8 @@ class TrajectoryResponse(betterproto.Message):
 class DirectionRequest(betterproto.Message):
     """DEFINE DIRECTION REQUEST"""
 
-    drone_state: "DroneState" = betterproto.message_field(1)
-    model_type: "DirectionRequestModelType" = betterproto.enum_field(2)
+    state: "DroneState" = betterproto.message_field(1)
+    model_type: "ModelType" = betterproto.enum_field(2)
 
 
 @dataclass
@@ -76,14 +78,11 @@ class ContinuousHeading(betterproto.Message):
 
 class ObstacleAvoidanceServiceStub(betterproto.ServiceStub):
     async def get_direction(
-        self,
-        *,
-        drone_state: Optional["DroneState"] = None,
-        model_type: "DirectionRequestModelType" = 0,
+        self, *, state: Optional["DroneState"] = None, model_type: "ModelType" = 0
     ) -> DirectionResponse:
         request = DirectionRequest()
-        if drone_state is not None:
-            request.drone_state = drone_state
+        if state is not None:
+            request.state = state
         request.model_type = model_type
 
         return await self._unary_unary(
@@ -95,18 +94,22 @@ class ObstacleAvoidanceServiceStub(betterproto.ServiceStub):
     async def get_trajectory(
         self,
         *,
-        current_state: Optional["DroneState"] = None,
+        state: Optional["DroneState"] = None,
         target_state: Optional["DroneState"] = None,
-        num_waypoints: int = 0,
         duration_s: int = 0,
+        sampling_time: float = 0,
+        model_type: "ModelType" = 0,
+        num_waypoints: int = 0,
     ) -> TrajectoryResponse:
         request = TrajectoryRequest()
-        if current_state is not None:
-            request.current_state = current_state
+        if state is not None:
+            request.state = state
         if target_state is not None:
             request.target_state = target_state
-        request.num_waypoints = num_waypoints
         request.duration_s = duration_s
+        request.sampling_time = sampling_time
+        request.model_type = model_type
+        request.num_waypoints = num_waypoints
 
         return await self._unary_unary(
             "/hyrl.ObstacleAvoidanceService/GetTrajectory",
