@@ -72,7 +72,7 @@ def initialize_hybrid_models():
         model,
         ObstacleAvoidance,
         min_state_difference=1e-2,
-        steps=5,
+        steps=15,
         threshold=1e-1,
         n_clusters=8,
         custom_state_to_observation=state_to_observation_OA,
