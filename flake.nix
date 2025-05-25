@@ -18,6 +18,7 @@
             python310Packages.uv
             grpcurl
             protobuf
+            mypy-protobuf
           ];
 
           shellHook = ''
@@ -64,6 +65,7 @@
             texliveFull
             grpcurl
             protobuf
+            mypy-protobuf
           ];
 
           shellHook = ''
@@ -114,6 +116,7 @@
             texliveFull
             grpcurl
             protobuf
+            mypy-protobuf
           ];
 
           shellHook = ''
