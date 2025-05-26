@@ -13,13 +13,15 @@ Y_MAX = 1.5
 OBSTACLE_CENTER = (1.5, 0.0)
 OBSTACLE_RADIUS = 0.75
 
+
 async def get_trajectory(channel, x, y, z, num_waypoints, duration_s):
     stub = oa_grpc.ObstacleAvoidanceServiceStub(channel)
     request = oa_proto.TrajectoryRequest(
-        current_state=oa_proto.DroneState(x=x, y=y, z=z),
+        state=oa_proto.DroneState(x=x, y=y, z=z),
         target_state=oa_proto.DroneState(x=3.0, y=0.0, z=z),
         num_waypoints=num_waypoints,
-        duration_s=duration_s
+        duration_s=duration_s,
+        sampling_time=0.001,
     )
     response = await stub.GetTrajectory(request)
     # Extract waypoints from the response
@@ -31,10 +33,14 @@ async def get_trajectory(channel, x, y, z, num_waypoints, duration_s):
         waypoints.append([x, y, z])
     return np.array(waypoints)
 
+
 async def simulate_trajectory(channel, state_init, num_waypoints, duration_s):
     # Get the trajectory directly from GetTrajectory
-    states = await get_trajectory(channel, state_init[0], state_init[1], 0.5, num_waypoints, duration_s)
+    states = await get_trajectory(
+        channel, state_init[0], state_init[1], 0.5, num_waypoints, duration_s
+    )
     return states
+
 
 async def simulate_client(num_waypoints, duration_s):
     starting_conditions = [
@@ -48,13 +54,12 @@ async def simulate_client(num_waypoints, duration_s):
     async with Channel(HOST, PORT) as channel:
         all_states = []
         for i, state_init in enumerate(starting_conditions):
-            states = await simulate_trajectory(channel, state_init, num_waypoints, duration_s)
+            states = await simulate_trajectory(
+                channel, state_init, num_waypoints, duration_s
+            )
             all_states.append(states)
-            print(f"\nTrajectory {i+1}:")
-            for j, waypoint in enumerate(states):
-                print(f"Waypoint {j+1}: x={waypoint[0]:.4f}, y={waypoint[1]:.4f}, z={waypoint[2]:.4f}")
-
         plot_trajectories(all_states)
+
 
 def plot_trajectories(all_states):
     fig, ax = plt.subplots(figsize=(12, 8))
@@ -99,12 +104,27 @@ def plot_trajectories(all_states):
     plt.savefig("trajectory_simulation.png")
     plt.show()
 
+
 if __name__ == "__main__":
     # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="Test GetTrajectory endpoint with configurable waypoints and duration.")
-    parser.add_argument('--num-waypoints', type=int, default=12, help='Number of waypoints in the trajectory')
-    parser.add_argument('--duration-s', type=int, default=12, help='Duration of the trajectory in seconds')
+    parser = argparse.ArgumentParser(
+        description="Test GetTrajectory endpoint with configurable waypoints and duration."
+    )
+    parser.add_argument(
+        "--num-waypoints",
+        type=int,
+        default=100,
+        help="Number of waypoints in the trajectory",
+    )
+    parser.add_argument(
+        "--duration-s",
+        type=int,
+        default=12,
+        help="Duration of the trajectory in seconds",
+    )
     args = parser.parse_args()
 
-    print(f"Testing GetTrajectory with num_waypoints={args.num_waypoints}, duration_s={args.duration_s}...")
+    print(
+        f"Testing GetTrajectory with num_waypoints={args.num_waypoints}, duration_s={args.duration_s}..."
+    )
     asyncio.run(simulate_client(args.num_waypoints, args.duration_s))

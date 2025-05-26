@@ -19,6 +19,7 @@ class ObstacleAvoidance(gym.Env):
         radius_obst=0.75,
         x_goal=3.0,
         y_goal=0.0,
+        t_sampling=0.01,
     ):
 
         # Existing arguments
@@ -39,7 +40,7 @@ class ObstacleAvoidance(gym.Env):
 
         self.min_x, self.max_x = 0.0, 3.0
         self.min_y, self.max_y = -1.5, 1.5
-        self.t_sampling = 0.05
+        self.t_sampling = t_sampling
 
         self.low_state = np.array([0.0, 0.0, self.min_y], dtype=np.float32)
         self.high_state = np.array([3, 4.5, self.max_y], dtype=np.float32)

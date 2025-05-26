@@ -33,6 +33,7 @@ protos:
 	  --python_out=$(OUT_DIR) \
 	  --grpclib_python_out=$(OUT_DIR) \
 		--python_betterproto_out=$(BETTERPROTO_OUT) \
+		--mypy_out=$(OUT_DIR) \
 	  $(PROTO_DIR)/hyrl_api/obstacle_avoidance.proto
 
 # Clean generated files (optional)

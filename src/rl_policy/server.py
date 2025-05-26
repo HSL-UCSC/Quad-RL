@@ -3,7 +3,11 @@ import signal
 import numpy as np
 import matplotlib.pyplot as plt
 from grpclib.server import Server
+from grpclib.exceptions import GRPCError
+from grpclib.const import Status
+
 from stable_baselines3 import DQN
+from typing import List
 
 from hyrl_api import obstacle_avoidance_grpc
 from hyrl_api import obstacle_avoidance_pb2 as oa_proto
@@ -26,7 +30,8 @@ import importlib.resources as pkg_resources
 
 @dataclass
 class ObstacleAvoidanceModels:
-    hybrid: HyRL_agent
+    hybrid_q0: HyRL_agent
+    hybrid_q1: HyRL_agent
     standard: DQN
 
 
@@ -67,7 +72,7 @@ def initialize_hybrid_models():
         model,
         ObstacleAvoidance,
         min_state_difference=1e-2,
-        steps=5,
+        steps=15,
         threshold=1e-1,
         n_clusters=8,
         custom_state_to_observation=state_to_observation_OA,
@@ -88,8 +93,9 @@ def initialize_hybrid_models():
     M_ext1 = M_ext(M_1, X_1)
     print("✅ Successfully built M_ext0 and M_ext1")
 
-    # Initialize hybrid agent
-    hybrid_agent = HyRL_agent(agent_0, agent_1, M_ext0, M_ext1, q_init=0)
+    # Initialize hybrid agents
+    hybrid_agent_q0 = HyRL_agent(agent_0, agent_1, M_ext0, M_ext1, q_init=0)
+    hybrid_agent_q1 = HyRL_agent(agent_0, agent_1, M_ext0, M_ext1, q_init=1)
     print("✅ Successfully initialized hybrid agent")
 
     # Simulate the hybrid agent compared to the original agent
@@ -114,7 +120,9 @@ def initialize_hybrid_models():
             save_name = "OA_HyRLDQN_Sim_q" + str(q) + ".png"
             plt.savefig(save_name, format="png")
         print("✅ Saved png file")
-    return ObstacleAvoidanceModels(hybrid=hybrid_agent, standard=model)
+    return ObstacleAvoidanceModels(
+        hybrid_q0=hybrid_agent_q0, hybrid_q1=hybrid_agent_q1, standard=model
+    )
 
 
 class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
@@ -128,16 +136,28 @@ class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
     }
 
     def __init__(self, models: ObstacleAvoidanceModels):
-        self.hybrid_agent = models.hybrid
+        self.hybrid_agent_q0 = models.hybrid_q0
+        self.hybrid_agent_q1 = models.hybrid_q1
         self.agent = models.standard
+
+    def agent_select(
+        self, state: oa_proto.DroneState, model_type: oa_proto.ModelType.ValueType
+    ) -> HyRL_agent | DQN:
+        if model_type == oa_proto.ModelType.STANDARD:
+            agent = self.agent
+        else:
+            agent = self.hybrid_agent_q0 if state.y > 0 else self.hybrid_agent_q1
+        return agent
 
     async def GetDirection(self, stream):
         request: oa_proto.DirectionRequest = await stream.recv_message()
         print(f"Received drone state: {request}")
 
-        state = np.array([request.drone_state.x, request.drone_state.y])
+        state = np.array([request.state.x, request.state.y])
         obs = state_to_observation_OA(state)
-        action_array, _ = self.hybrid_agent.predict(obs)
+
+        agent = self.agent_select(request.state, request.model_type)
+        action_array, _ = agent.predict(obs)
         if isinstance(action_array, np.ndarray):
             action = int(action_array.item())
         else:
@@ -157,39 +177,44 @@ class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
     async def GetTrajectory(self, stream):
         request: oa_proto.TrajectoryRequest = await stream.recv_message()
         print(f"Received trajectory request: {request}")
+        if 0 < request.num_waypoints < 3:
+            raise GRPCError(
+                Status.INVALID_ARGUMENT,
+                "num_waypoints must be greater than or equal to 3, or less than 0",
+            )
 
-        # TODO: implement get trajectory loop here
-        # obs = state_to_observation_OA(state)
-        # action_array, _ = self.hybrid_agent.predict(obs)
-        # if isinstance(action_array, np.ndarray):
-        #     action = int(action_array.item())
-        # else:
-        #     action = int(action_array)
-        #
-        # Send response
-
-        x_start = request.current_state.x
-        y_start = request.current_state.y
-        z_start = request.current_state.z
-        x_target = request.target_state.x
-        y_target = request.target_state.y
-        z_target = request.target_state.z
-        num_waypoints = request.num_waypoints
+        [x_start, y_start, z_start] = [
+            request.state.x,
+            request.state.y,
+            request.state.z,
+        ]
+        [x_target, y_target, z_target] = [
+            request.target_state.x,
+            request.target_state.y,
+            request.target_state.z,
+        ]
+        state = np.array([x_start, y_start], dtype=np.float32)
+        states: List[List[float]] = [list(state) + [z_start]]
         duration_s = request.duration_s
 
-        state = np.array([x_start, y_start], dtype=np.float32)
-        t_sampling = 0.05
+        # Agent select
+        # The q0 agent will bias to go up and around the obstacle, while q1 will bias to go the other way around
+        agent = self.agent_select(request.state, request.model_type)
+
+        t_sampling = request.sampling_time if request.sampling_time else 0.05
         steps = int(duration_s / t_sampling)
-        env = ObstacleAvoidance(state_init=state, random_init=False, steps=steps)
-        done = False
-        states = [[state[0], state[1], z_start]]
+        env = ObstacleAvoidance(
+            state_init=state, random_init=False, steps=steps, t_sampling=t_sampling
+        )
 
         target_pos = np.array([x_target, y_target])
         dist_threshold = 0.1
 
+        done = False
+        dist_to_target = np.inf
         while not done:
             obs = state_to_observation_OA(state)
-            action_array, _ = self.hybrid_agent.predict(obs)
+            action_array, _ = agent.predict(obs)
 
             if isinstance(action_array, np.ndarray):
                 action = int(action_array.item())
@@ -203,29 +228,26 @@ class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
             if dist_to_target < dist_threshold:
                 done = True
 
-            if not env.terminate: 
+            if not env.terminate:
                 states.append([state[0], state[1], z_start])
                 print(f"Step: State=[{state[0]:.4f}, {state[1]:.4f}], Action={action}")
-                
-        if dist_to_target < dist_threshold:
-            states[-1] = [x_target, y_target, z_target]
-        else:
-            states.append[x_target, y_target, z_target]
+
+        states.append([x_target, y_target, z_target])
 
         total_states = len(states)
-        if total_states < num_waypoints:
-            states.extend([[x_target, y_target, z_target]] * (num_waypoints - total_states))
-        elif total_states > num_waypoints:
-            indices = np.linspace(0, total_states - 1, num_waypoints, dtype=int)
+        print(f"Total states generated: {total_states}")
+        if total_states < request.num_waypoints:
+            states.extend(
+                [[x_target, y_target, z_target]]
+                * (request.num_waypoints - total_states)
+            )
+        elif total_states > request.num_waypoints:
+            indices = np.linspace(0, total_states - 1, request.num_waypoints, dtype=int)
             states = [states[i] for i in indices]
 
-              
         response = oa_proto.TrajectoryResponse(
-            trajectory = [
-                oa_proto.DroneState(x=x, y=y, z=z)
-                for x, y, z in states
-        ])
-        print(f"Generated trajectory: {[wp for wp in response.trajectory]}")
+            trajectory=[oa_proto.DroneState(x=x, y=y, z=z) for x, y, z in states]
+        )
         await stream.send_message(response)
 
 

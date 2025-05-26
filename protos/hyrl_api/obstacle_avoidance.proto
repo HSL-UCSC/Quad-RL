@@ -15,11 +15,18 @@ message DroneState {
   float z = 3;
 }
 
+enum ModelType {
+  STANDARD = 0;
+  HYBRID = 1;
+}
+
 message TrajectoryRequest{
-  DroneState current_state = 1;
+  DroneState state = 1;
   DroneState target_state = 2;
-  uint32 num_waypoints = 3; 
-  uint32 duration_s = 4; 
+  uint32 duration_s = 3; 
+  float sampling_time = 4;
+  ModelType model_type = 5;
+  int32 num_waypoints = 6; 
 }
 
 
@@ -29,11 +36,7 @@ message TrajectoryResponse {
 
 // DEFINE DIRECTION REQUEST
 message DirectionRequest {
-  enum ModelType {
-    STANDARD = 0;
-    HYBRID = 1;
-  }
-  DroneState drone_state = 1;
+  DroneState state = 1;
   ModelType model_type = 2;
 }
 
