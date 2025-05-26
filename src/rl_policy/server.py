@@ -9,6 +9,9 @@ from grpclib.const import Status
 from stable_baselines3 import DQN
 from typing import List
 
+from scipy.interpolate import splprep, splev
+
+
 from hyrl_api import obstacle_avoidance_grpc
 from hyrl_api import obstacle_avoidance_pb2 as oa_proto
 from rl_policy.training_env import ObstacleAvoidance
@@ -175,6 +178,16 @@ class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
         await stream.send_message(response)
 
     async def GetTrajectory(self, stream):
+
+        def smooth_path(states, num_waypoints):
+            if len(states) < 3:
+                return states
+            # Fit a spline to the states
+            tck, u = splprep(np.array(states).T, s=2)
+            new_u = np.linspace(0, 1, num_waypoints)
+            smoothed_states = splev(new_u, tck)
+            return np.array(smoothed_states).T.tolist()
+
         request: oa_proto.TrajectoryRequest = await stream.recv_message()
         print(f"Received trajectory request: {request}")
         if 0 < request.num_waypoints < 3:
@@ -230,24 +243,13 @@ class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
 
             if not env.terminate:
                 states.append([state[0], state[1], z_start])
-                print(f"Step: State=[{state[0]:.4f}, {state[1]:.4f}], Action={action}")
-
-        states.append([x_target, y_target, z_target])
 
         total_states = len(states)
-        print(f"Total states generated: {total_states}")
-        if total_states < request.num_waypoints:
-            states.extend(
-                [[x_target, y_target, z_target]]
-                * (request.num_waypoints - total_states)
-            )
-        elif total_states > request.num_waypoints:
-            indices = np.linspace(0, total_states - 1, request.num_waypoints, dtype=int)
-            states = [states[i] for i in indices]
-
+        states = smooth_path(states, request.num_waypoints)
         response = oa_proto.TrajectoryResponse(
             trajectory=[oa_proto.DroneState(x=x, y=y, z=z) for x, y, z in states]
         )
+        print(f"Total states generated: {total_states}")
         await stream.send_message(response)
 
 
