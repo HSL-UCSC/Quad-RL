@@ -39,6 +39,7 @@ class TrajectoryRequest(betterproto.Message):
     sampling_time: float = betterproto.float_field(4)
     model_type: "ModelType" = betterproto.enum_field(5)
     num_waypoints: int = betterproto.int32_field(6)
+    noise: bool = betterproto.bool_field(7)
 
 
 @dataclass
@@ -100,6 +101,7 @@ class ObstacleAvoidanceServiceStub(betterproto.ServiceStub):
         sampling_time: float = 0,
         model_type: "ModelType" = 0,
         num_waypoints: int = 0,
+        noise: bool = False,
     ) -> TrajectoryResponse:
         request = TrajectoryRequest()
         if state is not None:
@@ -110,6 +112,7 @@ class ObstacleAvoidanceServiceStub(betterproto.ServiceStub):
         request.sampling_time = sampling_time
         request.model_type = model_type
         request.num_waypoints = num_waypoints
+        request.noise = noise
 
         return await self._unary_unary(
             "/hyrl.ObstacleAvoidanceService/GetTrajectory",

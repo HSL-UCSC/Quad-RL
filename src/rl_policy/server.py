@@ -1,10 +1,12 @@
 import asyncio
+import os
 import signal
 import numpy as np
 import matplotlib.pyplot as plt
 from grpclib.server import Server
 from grpclib.exceptions import GRPCError
 from grpclib.const import Status
+from dotenv import load_dotenv
 
 from stable_baselines3 import DQN
 from typing import List
@@ -129,7 +131,6 @@ def initialize_hybrid_models():
 
 
 class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
-
     direction_map = {
         0: oa_proto.HeadingDirection.STRAIGHT,  # 1
         1: oa_proto.HeadingDirection.LEFT,  # 2
@@ -178,7 +179,6 @@ class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
         await stream.send_message(response)
 
     async def GetTrajectory(self, stream):
-
         def smooth_path(states, num_waypoints):
             if len(states) < 3:
                 return states
@@ -225,8 +225,15 @@ class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
 
         done = False
         dist_to_target = np.inf
+        noise_mag = os.getenv("NOISE_MAG", "0.3")
+        sign = 1
         while not done:
-            obs = state_to_observation_OA(state)
+            noise = noise_mag * sign
+            disturbance = np.array([0, noise], dtype=np.float32)
+            if request.noise:
+                obs = state_to_observation_OA(state + disturbance)
+            else:
+                obs = state_to_observation_OA(state)
             action_array, _ = agent.predict(obs)
 
             if isinstance(action_array, np.ndarray):
@@ -243,6 +250,7 @@ class DroneService(obstacle_avoidance_grpc.ObstacleAvoidanceServiceBase):
 
             if not env.terminate:
                 states.append([state[0], state[1], z_start])
+            sign *= -1
 
         total_states = len(states)
         states = smooth_path(states, request.num_waypoints)
@@ -281,5 +289,6 @@ async def main():
 
 
 if __name__ == "__main__":
+    load_dotenv()
     print("Starting gRPC server...")
     asyncio.run(main())

@@ -90,10 +90,12 @@ class TrajectoryRequest(google.protobuf.message.Message):
     SAMPLING_TIME_FIELD_NUMBER: builtins.int
     MODEL_TYPE_FIELD_NUMBER: builtins.int
     NUM_WAYPOINTS_FIELD_NUMBER: builtins.int
+    NOISE_FIELD_NUMBER: builtins.int
     duration_s: builtins.int
     sampling_time: builtins.float
     model_type: global___ModelType.ValueType
     num_waypoints: builtins.int
+    noise: builtins.bool
     @property
     def state(self) -> global___DroneState: ...
     @property
@@ -107,9 +109,10 @@ class TrajectoryRequest(google.protobuf.message.Message):
         sampling_time: builtins.float = ...,
         model_type: global___ModelType.ValueType = ...,
         num_waypoints: builtins.int = ...,
+        noise: builtins.bool = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["state", b"state", "target_state", b"target_state"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["duration_s", b"duration_s", "model_type", b"model_type", "num_waypoints", b"num_waypoints", "sampling_time", b"sampling_time", "state", b"state", "target_state", b"target_state"]) -> None: ...
+    def ClearField(self, field_name: typing.Literal["duration_s", b"duration_s", "model_type", b"model_type", "noise", b"noise", "num_waypoints", b"num_waypoints", "sampling_time", b"sampling_time", "state", b"state", "target_state", b"target_state"]) -> None: ...
 
 global___TrajectoryRequest = TrajectoryRequest
 

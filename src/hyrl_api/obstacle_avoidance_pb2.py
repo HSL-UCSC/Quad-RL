@@ -24,31 +24,31 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n!hyrl_api/obstacle_avoidance.proto\x12\x04hyrl\"-\n\nDroneState\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\"\xc3\x01\n\x11TrajectoryRequest\x12\x1f\n\x05state\x18\x01 \x01(\x0b\x32\x10.hyrl.DroneState\x12&\n\x0ctarget_state\x18\x02 \x01(\x0b\x32\x10.hyrl.DroneState\x12\x12\n\nduration_s\x18\x03 \x01(\r\x12\x15\n\rsampling_time\x18\x04 \x01(\x02\x12#\n\nmodel_type\x18\x05 \x01(\x0e\x32\x0f.hyrl.ModelType\x12\x15\n\rnum_waypoints\x18\x06 \x01(\x05\":\n\x12TrajectoryResponse\x12$\n\ntrajectory\x18\x01 \x03(\x0b\x32\x10.hyrl.DroneState\"X\n\x10\x44irectionRequest\x12\x1f\n\x05state\x18\x01 \x01(\x0b\x32\x10.hyrl.DroneState\x12#\n\nmodel_type\x18\x02 \x01(\x0e\x32\x0f.hyrl.ModelType\"\x8d\x01\n\x11\x44irectionResponse\x12\x31\n\x10\x64iscrete_heading\x18\x02 \x01(\x0b\x32\x15.hyrl.DiscreteHeadingH\x00\x12\x35\n\x12\x63ontinuous_heading\x18\x03 \x01(\x0b\x32\x17.hyrl.ContinuousHeadingH\x00\x42\x0e\n\x0c\x63ontrol_type\"<\n\x0f\x44iscreteHeading\x12)\n\tdirection\x18\x01 \x01(\x0e\x32\x16.hyrl.HeadingDirection\" \n\x11\x43ontinuousHeading\x12\x0b\n\x03rad\x18\x01 \x01(\x02*%\n\tModelType\x12\x0c\n\x08STANDARD\x10\x00\x12\n\n\x06HYBRID\x10\x01*b\n\x10HeadingDirection\x12\x0c\n\x08RESERVED\x10\x00\x12\x0c\n\x08STRAIGHT\x10\x01\x12\x08\n\x04LEFT\x10\x02\x12\r\n\tHARD_LEFT\x10\x03\x12\t\n\x05RIGHT\x10\x04\x12\x0e\n\nHARD_RIGHT\x10\x05\x32\x9f\x01\n\x18ObstacleAvoidanceService\x12?\n\x0cGetDirection\x12\x16.hyrl.DirectionRequest\x1a\x17.hyrl.DirectionResponse\x12\x42\n\rGetTrajectory\x12\x17.hyrl.TrajectoryRequest\x1a\x18.hyrl.TrajectoryResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n!hyrl_api/obstacle_avoidance.proto\x12\x04hyrl\"-\n\nDroneState\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\"\xd2\x01\n\x11TrajectoryRequest\x12\x1f\n\x05state\x18\x01 \x01(\x0b\x32\x10.hyrl.DroneState\x12&\n\x0ctarget_state\x18\x02 \x01(\x0b\x32\x10.hyrl.DroneState\x12\x12\n\nduration_s\x18\x03 \x01(\r\x12\x15\n\rsampling_time\x18\x04 \x01(\x02\x12#\n\nmodel_type\x18\x05 \x01(\x0e\x32\x0f.hyrl.ModelType\x12\x15\n\rnum_waypoints\x18\x06 \x01(\x05\x12\r\n\x05noise\x18\x07 \x01(\x08\":\n\x12TrajectoryResponse\x12$\n\ntrajectory\x18\x01 \x03(\x0b\x32\x10.hyrl.DroneState\"X\n\x10\x44irectionRequest\x12\x1f\n\x05state\x18\x01 \x01(\x0b\x32\x10.hyrl.DroneState\x12#\n\nmodel_type\x18\x02 \x01(\x0e\x32\x0f.hyrl.ModelType\"\x8d\x01\n\x11\x44irectionResponse\x12\x31\n\x10\x64iscrete_heading\x18\x02 \x01(\x0b\x32\x15.hyrl.DiscreteHeadingH\x00\x12\x35\n\x12\x63ontinuous_heading\x18\x03 \x01(\x0b\x32\x17.hyrl.ContinuousHeadingH\x00\x42\x0e\n\x0c\x63ontrol_type\"<\n\x0f\x44iscreteHeading\x12)\n\tdirection\x18\x01 \x01(\x0e\x32\x16.hyrl.HeadingDirection\" \n\x11\x43ontinuousHeading\x12\x0b\n\x03rad\x18\x01 \x01(\x02*%\n\tModelType\x12\x0c\n\x08STANDARD\x10\x00\x12\n\n\x06HYBRID\x10\x01*b\n\x10HeadingDirection\x12\x0c\n\x08RESERVED\x10\x00\x12\x0c\n\x08STRAIGHT\x10\x01\x12\x08\n\x04LEFT\x10\x02\x12\r\n\tHARD_LEFT\x10\x03\x12\t\n\x05RIGHT\x10\x04\x12\x0e\n\nHARD_RIGHT\x10\x05\x32\x9f\x01\n\x18ObstacleAvoidanceService\x12?\n\x0cGetDirection\x12\x16.hyrl.DirectionRequest\x1a\x17.hyrl.DirectionResponse\x12\x42\n\rGetTrajectory\x12\x17.hyrl.TrajectoryRequest\x1a\x18.hyrl.TrajectoryResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'hyrl_api.obstacle_avoidance_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_MODELTYPE']._serialized_start=678
-  _globals['_MODELTYPE']._serialized_end=715
-  _globals['_HEADINGDIRECTION']._serialized_start=717
-  _globals['_HEADINGDIRECTION']._serialized_end=815
+  _globals['_MODELTYPE']._serialized_start=693
+  _globals['_MODELTYPE']._serialized_end=730
+  _globals['_HEADINGDIRECTION']._serialized_start=732
+  _globals['_HEADINGDIRECTION']._serialized_end=830
   _globals['_DRONESTATE']._serialized_start=43
   _globals['_DRONESTATE']._serialized_end=88
   _globals['_TRAJECTORYREQUEST']._serialized_start=91
-  _globals['_TRAJECTORYREQUEST']._serialized_end=286
-  _globals['_TRAJECTORYRESPONSE']._serialized_start=288
-  _globals['_TRAJECTORYRESPONSE']._serialized_end=346
-  _globals['_DIRECTIONREQUEST']._serialized_start=348
-  _globals['_DIRECTIONREQUEST']._serialized_end=436
-  _globals['_DIRECTIONRESPONSE']._serialized_start=439
-  _globals['_DIRECTIONRESPONSE']._serialized_end=580
-  _globals['_DISCRETEHEADING']._serialized_start=582
-  _globals['_DISCRETEHEADING']._serialized_end=642
-  _globals['_CONTINUOUSHEADING']._serialized_start=644
-  _globals['_CONTINUOUSHEADING']._serialized_end=676
-  _globals['_OBSTACLEAVOIDANCESERVICE']._serialized_start=818
-  _globals['_OBSTACLEAVOIDANCESERVICE']._serialized_end=977
+  _globals['_TRAJECTORYREQUEST']._serialized_end=301
+  _globals['_TRAJECTORYRESPONSE']._serialized_start=303
+  _globals['_TRAJECTORYRESPONSE']._serialized_end=361
+  _globals['_DIRECTIONREQUEST']._serialized_start=363
+  _globals['_DIRECTIONREQUEST']._serialized_end=451
+  _globals['_DIRECTIONRESPONSE']._serialized_start=454
+  _globals['_DIRECTIONRESPONSE']._serialized_end=595
+  _globals['_DISCRETEHEADING']._serialized_start=597
+  _globals['_DISCRETEHEADING']._serialized_end=657
+  _globals['_CONTINUOUSHEADING']._serialized_start=659
+  _globals['_CONTINUOUSHEADING']._serialized_end=691
+  _globals['_OBSTACLEAVOIDANCESERVICE']._serialized_start=833
+  _globals['_OBSTACLEAVOIDANCESERVICE']._serialized_end=992
 # @@protoc_insertion_point(module_scope)
