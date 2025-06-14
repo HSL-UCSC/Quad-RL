@@ -23,10 +23,11 @@ enum ModelType {
 message TrajectoryRequest{
   DroneState state = 1;
   DroneState target_state = 2;
-  uint32 duration_s = 3; 
+  uint32 duration_s = 3;
   float sampling_time = 4;
   ModelType model_type = 5;
-  int32 num_waypoints = 6; 
+  int32 num_waypoints = 6;
+  bool noise = 7;
 }
 
 
